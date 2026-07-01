@@ -8,6 +8,13 @@
   ],
   "scripts": {
     "build": "npm --prefix apps/api run build",
+    "start:prod": "npm --prefix apps/api run start:prod",
+    "start:worker:main": "npm --prefix apps/api run start:worker:main",
+    "start:worker:automation": "npm --prefix apps/api run start:worker:automation",
+    "start:worker:notification": "npm --prefix apps/api run start:worker:notification",
+    "start:worker:analytics": "npm --prefix apps/api run start:worker:analytics",
+    "start:worker:feed": "npm --prefix apps/api run start:worker:feed",
+    "prisma:migrate:deploy": "npx prisma migrate deploy --schema apps/api/prisma/schema.prisma",
     "lint": "prettier --check \"apps/api/src/**/*.ts\" \"scripts/**/*.js\"",
     "type-check": "tsc --noEmit -p apps/api/tsconfig.json",
     "check:imports": "node scripts/check-imports.js",
