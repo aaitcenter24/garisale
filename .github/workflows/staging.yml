@@ -1,0 +1,75 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: staging
+      url: https://staging.garisale.com
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      # GATE 1: All tests must pass
+      - name: Run full test suite
+        run: npm run test:all
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      # GATE 2: Build all packages
+      - name: Build
+        run: npm run build
+
+      # GATE 3: Run database migrations on staging (must succeed)
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      # GATE 4: Deploy API and Workers to Railway (staging)
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy to Railway (staging)
+        run: |
+          railway up --service "api-staging" --detach
+          railway up --service "main-worker-staging" --detach
+          railway up --service "automation-worker-staging" --detach
+          railway up --service "notification-worker-staging" --detach
+          railway up --service "analytics-worker-staging" --detach
+          railway up --service "feed-worker-staging" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+
+      # GATE 5: Deploy frontend to Vercel
+      - name: Deploy marketplace to Vercel (staging)
+        run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy admin panel to Vercel (staging)
+        run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }}
+          working-directory: apps/admin
+
+      # GATE 6: Smoke tests against staging
+      - name: Run smoke tests
+        run: npm run test:smoke -- --baseUrl=https://staging.api.garisale.com
+        timeout-minutes: 5
+
+      - name: Notify Slack — Staging Deploy Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ Staging deployed: ${{ github.sha }} by ${{ github.actor }}",
+              "channel": "#deploys"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

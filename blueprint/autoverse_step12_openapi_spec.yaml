@@ -1,0 +1,5389 @@
+openapi: 3.0.3
+
+info:
+  title: AutoVerse API
+  description: |
+    Complete REST API for the AutoVerse Automotive Ecosystem OS.
+    
+    ## Authentication
+    Most endpoints require a Bearer JWT token in the `Authorization` header.
+    Dealer and Admin tokens use separate RS256 / HS256 signing keys.
+    
+    ## Tenancy
+    All dealer-scoped endpoints automatically filter by the `dealer_id` claim
+    in the JWT. Passing a `dealership_id` in the request body is ignored —
+    the JWT claim is always authoritative.
+    
+    ## Response Envelope
+    All responses are wrapped:
+    ```json
+    { "success": true, "data": <T>, "meta": { "total": 0, "page": 1, "limit": 20 } }
+    { "success": false, "error": { "code": "ERROR_CODE", "message": "..." }, "request_id": "uuid" }
+    ```
+    
+    ## Versioning
+    All routes are prefixed with `/api/v1/`.
+  version: "1.0.0"
+  contact:
+    name: AutoVerse Engineering
+    email: engineering@autoverse.com.bd
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.autoverse.com.bd/api/v1
+    description: Production
+  - url: https://staging.api.autoverse.com.bd/api/v1
+    description: Staging
+
+# ─────────────────────────────────────────────────────────────────
+# SECURITY SCHEMES
+# ─────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    DealerBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: RS256 dealer JWT. Claims include dealer_id, dealer_role, plan_tier.
+    AdminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: HS256 admin JWT. Claims include admin_role, session_id.
+
+  # ─────────────────────────────────────────────────────────────────
+  # SHARED PARAMETERS
+  # ─────────────────────────────────────────────────────────────────
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+    OrderParam:
+      name: order
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+
+  # ─────────────────────────────────────────────────────────────────
+  # SHARED SCHEMAS
+  # ─────────────────────────────────────────────────────────────────
+  schemas:
+
+    # ── ENUMS ──────────────────────────────────────────────────────
+    UserRole:
+      type: string
+      enum: [admin_user, dealer_owner, manager, salesperson, technician, buyer, c2c_seller]
+
+    VehicleStatus:
+      type: string
+      enum: [acquired, in_recon, available, reserved, sold, scrapped]
+
+    VehicleCondition:
+      type: string
+      enum: [new, used, reconditioned]
+
+    FuelType:
+      type: string
+      enum: [petrol, diesel, hybrid, electric, cng, lpg]
+
+    TransmissionType:
+      type: string
+      enum: [automatic, manual, cvt, dct, amt]
+
+    LeadStage:
+      type: string
+      enum: [new, contacted, qualified, test_drive, quote_sent, negotiation, closed, lost]
+
+    LeadSource:
+      type: string
+      enum: [walk_in, marketplace, dealer_website, facebook_lead_ad, whatsapp, phone, referral, sms_campaign, email_campaign, social_media, other]
+
+    LeadPriority:
+      type: string
+      enum: [hot, warm, cold]
+
+    DealStatus:
+      type: string
+      enum: [draft, pending_approval, approved, delivered, cancelled]
+
+    DealType:
+      type: string
+      enum: [cash, finance, lease, exchange, exchange_plus_cash]
+
+    DealRating:
+      type: string
+      enum: [great_deal, good_deal, fair_price, overpriced, unrated]
+
+    ListingStatus:
+      type: string
+      enum: [active, reserved, sold, hidden, archived, expired, under_review, rejected]
+
+    PaymentMethod:
+      type: string
+      enum: [bkash, nagad, rocket, bank_transfer, cash, sslcommerz, card, cheque]
+
+    SubscriptionTier:
+      type: string
+      enum: [free, starter, professional, business, enterprise]
+
+    AutomationChannel:
+      type: string
+      enum: [whatsapp, facebook, instagram, email, sms, push]
+
+    LanguagePref:
+      type: string
+      enum: [en, bn]
+
+    # ── PAGINATION META ──────────────────────────────────────────────
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        has_more:
+          type: boolean
+
+    # ── MONEY ────────────────────────────────────────────────────────
+    BdtAmount:
+      type: number
+      format: decimal
+      description: Amount in Bangladesh Taka (BDT). Two decimal places.
+      example: 1450000.00
+
+    # ── ERROR ────────────────────────────────────────────────────────
+    ApiError:
+      type: object
+      required: [success, error, request_id]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: VEHICLE_NOT_FOUND
+            message:
+              type: string
+              example: Vehicle not found
+            field:
+              type: string
+              description: Present only for validation errors
+        request_id:
+          type: string
+          format: uuid
+
+    # ── VEHICLE PHOTO ─────────────────────────────────────────────────
+    VehiclePhoto:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        thumb_url:
+          type: string
+          format: uri
+        sort_order:
+          type: integer
+        is_primary:
+          type: boolean
+        captured_at:
+          type: string
+          format: date-time
+
+    # ── USER ─────────────────────────────────────────────────────────
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          example: "+8801711234567"
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        preferred_language:
+          $ref: '#/components/schemas/LanguagePref'
+        avatar_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+
+    # ── DEALERSHIP ───────────────────────────────────────────────────
+    Dealership:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+        slug:
+          type: string
+        status:
+          type: string
+          enum: [pending_approval, active, suspended, terminated]
+        subscription_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        subscription_expires_at:
+          type: string
+          format: date-time
+        listing_limit:
+          type: integer
+        district:
+          type: string
+        division:
+          type: string
+        phone:
+          type: string
+        whatsapp_number:
+          type: string
+        logo_url:
+          type: string
+          format: uri
+        primary_color:
+          type: string
+          example: "#2563EB"
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        review_count:
+          type: integer
+        total_listings:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    # ── VEHICLE ──────────────────────────────────────────────────────
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dealership_id:
+          type: string
+          format: uuid
+        stock_no:
+          type: string
+          example: SK-202501-0034
+        vin:
+          type: string
+          maxLength: 17
+        make:
+          type: string
+          example: Toyota
+        model:
+          type: string
+          example: Axio
+        year:
+          type: integer
+          example: 2019
+        variant:
+          type: string
+          example: G Grade
+        body_type:
+          type: string
+        engine_cc:
+          type: integer
+        fuel_type:
+          $ref: '#/components/schemas/FuelType'
+        transmission:
+          $ref: '#/components/schemas/TransmissionType'
+        condition:
+          $ref: '#/components/schemas/VehicleCondition'
+        mileage_km:
+          type: integer
+        mileage_bucket:
+          type: string
+          enum: ['0-30K', '30-60K', '60-100K', '100K+']
+        color:
+          type: string
+        asking_price:
+          $ref: '#/components/schemas/BdtAmount'
+        # Financial fields — null for roles without access
+        acquisition_cost:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for Manager and Salesperson roles"
+        recon_total:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for Salesperson role"
+        net_profit_estimate:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for Manager and Salesperson roles"
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        days_on_lot:
+          type: integer
+          nullable: true
+          description: Computed column. Present only when status is available.
+        available_at:
+          type: string
+          format: date-time
+          nullable: true
+        sold_at:
+          type: string
+          format: date-time
+          nullable: true
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehiclePhoto'
+        photo_count:
+          type: integer
+        marketplace_published:
+          type: boolean
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        sync_error:
+          type: string
+          nullable: true
+        features:
+          type: array
+          items:
+            type: string
+        specs:
+          type: object
+          additionalProperties: true
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVehicleDto:
+      type: object
+      required: [make, model, year, mileage_km, fuel_type, transmission, condition, asking_price]
+      properties:
+        vin:
+          type: string
+          minLength: 17
+          maxLength: 17
+          nullable: true
+        make:
+          type: string
+          maxLength: 100
+        model:
+          type: string
+          maxLength: 100
+        year:
+          type: integer
+          minimum: 1970
+          maximum: 2027
+        variant:
+          type: string
+          maxLength: 200
+        body_type:
+          type: string
+          maxLength: 50
+        engine_cc:
+          type: integer
+          minimum: 0
+        fuel_type:
+          $ref: '#/components/schemas/FuelType'
+        transmission:
+          $ref: '#/components/schemas/TransmissionType'
+        condition:
+          $ref: '#/components/schemas/VehicleCondition'
+        mileage_km:
+          type: integer
+          minimum: 0
+          maximum: 2000000
+        color:
+          type: string
+        asking_price:
+          $ref: '#/components/schemas/BdtAmount'
+        acquisition_cost:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        acquisition_source:
+          type: string
+          enum: [auction, trade_in, direct_purchase, consignment, import]
+        acquisition_date:
+          type: string
+          format: date
+        acquired_from:
+          type: string
+        description:
+          type: string
+          maxLength: 2000
+        features:
+          type: array
+          items:
+            type: string
+        specs:
+          type: object
+          additionalProperties: true
+        marketplace_published:
+          type: boolean
+          default: true
+
+    UpdateVehicleStatusDto:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/VehicleStatus'
+        reason:
+          type: string
+
+    # ── RECON ─────────────────────────────────────────────────────────
+    ReconAssessment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        engine_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        body_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        paint_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        interior_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        electricals_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        tyres_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        ac_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        brakes_status:
+          type: string
+          enum: [ok, needs_work, critical]
+        engine_notes:
+          type: string
+          nullable: true
+        body_notes:
+          type: string
+          nullable: true
+        paint_notes:
+          type: string
+          nullable: true
+        interior_notes:
+          type: string
+          nullable: true
+        electricals_notes:
+          type: string
+          nullable: true
+        tyres_notes:
+          type: string
+          nullable: true
+        ac_notes:
+          type: string
+          nullable: true
+        brakes_notes:
+          type: string
+          nullable: true
+        overall_notes:
+          type: string
+          nullable: true
+        assessed_by:
+          type: string
+          format: uuid
+        assessed_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconTask'
+
+    ReconTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [engine, body, paint, interior, electricals, tyres, ac, brakes, other]
+        description:
+          type: string
+        assigned_to_user:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to_name:
+          type: string
+          nullable: true
+        estimated_cost:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        actual_cost:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        status:
+          type: string
+          enum: [pending, in_progress, complete, cancelled]
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: "1=critical, 2=normal, 3=minor"
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        receipt_url:
+          type: string
+          format: uri
+          nullable: true
+
+    CreateReconTaskDto:
+      type: object
+      required: [category, description]
+      properties:
+        category:
+          type: string
+          enum: [engine, body, paint, interior, electricals, tyres, ac, brakes, other]
+        description:
+          type: string
+        assigned_to_user:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to_name:
+          type: string
+          nullable: true
+        estimated_cost:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 3
+          default: 2
+
+    CompleteReconTaskDto:
+      type: object
+      required: [actual_cost]
+      properties:
+        actual_cost:
+          $ref: '#/components/schemas/BdtAmount'
+        notes:
+          type: string
+
+    # ── LEAD ──────────────────────────────────────────────────────────
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dealership_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_to_name:
+          type: string
+          nullable: true
+        vehicle_id:
+          type: string
+          format: uuid
+          nullable: true
+        vehicle_summary:
+          type: object
+          nullable: true
+          properties:
+            make: { type: string }
+            model: { type: string }
+            year: { type: integer }
+            asking_price: { $ref: '#/components/schemas/BdtAmount' }
+            primary_photo_url: { type: string, format: uri }
+        buyer_name:
+          type: string
+        buyer_phone:
+          type: string
+        buyer_email:
+          type: string
+          format: email
+          nullable: true
+        buyer_district:
+          type: string
+          nullable: true
+        source:
+          $ref: '#/components/schemas/LeadSource'
+        stage:
+          $ref: '#/components/schemas/LeadStage'
+        priority:
+          $ref: '#/components/schemas/LeadPriority'
+        lead_score:
+          type: integer
+          minimum: 0
+          maximum: 200
+        lost_reason:
+          type: string
+          nullable: true
+        budget_min:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        budget_max:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        next_follow_up:
+          type: string
+          format: date-time
+          nullable: true
+        follow_up_method:
+          $ref: '#/components/schemas/AutomationChannel'
+          nullable: true
+        test_drive_scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        enquiry_count:
+          type: integer
+          default: 1
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateLeadDto:
+      type: object
+      required: [buyer_name, buyer_phone]
+      properties:
+        buyer_name:
+          type: string
+          maxLength: 255
+        buyer_phone:
+          type: string
+          maxLength: 20
+        buyer_email:
+          type: string
+          format: email
+          nullable: true
+        buyer_district:
+          type: string
+          nullable: true
+        source:
+          $ref: '#/components/schemas/LeadSource'
+          default: walk_in
+        vehicle_id:
+          type: string
+          format: uuid
+          nullable: true
+        budget_min:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        budget_max:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+
+    UpdateLeadStageDto:
+      type: object
+      required: [stage]
+      properties:
+        stage:
+          $ref: '#/components/schemas/LeadStage'
+        lost_reason:
+          type: string
+          description: Required when stage is 'lost'
+          nullable: true
+
+    LogInteractionDto:
+      type: object
+      required: [type, summary]
+      properties:
+        type:
+          type: string
+          enum: [call_outbound, call_inbound, whatsapp_sent, whatsapp_received, email_sent, sms_sent, walk_in, test_drive, note, stage_change]
+        direction:
+          type: string
+          enum: [inbound, outbound]
+          nullable: true
+        summary:
+          type: string
+          maxLength: 500
+        body:
+          type: string
+          nullable: true
+        duration_sec:
+          type: integer
+          nullable: true
+          description: For call interactions
+
+    ScheduleFollowUpDto:
+      type: object
+      required: [next_follow_up]
+      properties:
+        next_follow_up:
+          type: string
+          format: date-time
+        follow_up_method:
+          $ref: '#/components/schemas/AutomationChannel'
+
+    LeadInteraction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lead_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+        direction:
+          type: string
+          nullable: true
+        channel:
+          $ref: '#/components/schemas/AutomationChannel'
+          nullable: true
+        summary:
+          type: string
+        body:
+          type: string
+          nullable: true
+        duration_sec:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ── CUSTOMER ─────────────────────────────────────────────────────
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        district:
+          type: string
+          nullable: true
+        preferred_makes:
+          type: array
+          items:
+            type: string
+        preferred_body_types:
+          type: array
+          items:
+            type: string
+        budget_min:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        budget_max:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        opted_in_sms:
+          type: boolean
+        opted_in_whatsapp:
+          type: boolean
+        opted_in_email:
+          type: boolean
+        opted_in_inventory_alerts:
+          type: boolean
+        total_purchases:
+          type: integer
+        total_spend:
+          $ref: '#/components/schemas/BdtAmount'
+        last_interaction_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ── DEAL ──────────────────────────────────────────────────────────
+    Deal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lead_id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        salesperson_id:
+          type: string
+          format: uuid
+        manager_approval_id:
+          type: string
+          format: uuid
+          nullable: true
+        deal_type:
+          $ref: '#/components/schemas/DealType'
+        sale_price:
+          $ref: '#/components/schemas/BdtAmount'
+        list_price:
+          $ref: '#/components/schemas/BdtAmount'
+        discount_amount:
+          $ref: '#/components/schemas/BdtAmount'
+        trade_in_value:
+          $ref: '#/components/schemas/BdtAmount'
+        gross_profit:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for non-Owner roles"
+        deposit_paid:
+          $ref: '#/components/schemas/BdtAmount'
+        balance_due:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DealStatus'
+        lender_name:
+          type: string
+          nullable: true
+        loan_amount:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        interest_rate_pct:
+          type: number
+          nullable: true
+        loan_term_months:
+          type: integer
+          nullable: true
+        monthly_instalment:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        bill_of_sale_url:
+          type: string
+          format: uri
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDealDto:
+      type: object
+      required: [lead_id, vehicle_id, sale_price, deal_type]
+      properties:
+        lead_id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        sale_price:
+          $ref: '#/components/schemas/BdtAmount'
+        deal_type:
+          $ref: '#/components/schemas/DealType'
+        trade_in_vehicle_id:
+          type: string
+          format: uuid
+          nullable: true
+        trade_in_value:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        lender_name:
+          type: string
+          nullable: true
+        loan_amount:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        down_payment:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        interest_rate_pct:
+          type: number
+          nullable: true
+        loan_term_months:
+          type: integer
+          nullable: true
+        delivery_district:
+          type: string
+          nullable: true
+        delivery_address:
+          type: string
+          nullable: true
+        delivery_notes:
+          type: string
+          nullable: true
+
+    RecordPaymentDto:
+      type: object
+      required: [amount, payment_method, payment_type]
+      properties:
+        amount:
+          $ref: '#/components/schemas/BdtAmount'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod'
+        payment_type:
+          type: string
+          enum: [deposit, instalment, final, refund]
+        reference_no:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    # ── EXPENSE ──────────────────────────────────────────────────────
+    VehicleExpense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        category_name:
+          type: string
+        amount:
+          $ref: '#/components/schemas/BdtAmount'
+        vendor:
+          type: string
+          nullable: true
+        invoice_no:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        receipt_url:
+          type: string
+          format: uri
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    CreateVehicleExpenseDto:
+      type: object
+      required: [category_id, amount, date]
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        amount:
+          $ref: '#/components/schemas/BdtAmount'
+        vendor:
+          type: string
+          nullable: true
+        invoice_no:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+
+    OperationalExpense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        category_name:
+          type: string
+        amount:
+          $ref: '#/components/schemas/BdtAmount'
+        date:
+          type: string
+          format: date
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod'
+        reference_no:
+          type: string
+          nullable: true
+        receipt_url:
+          type: string
+          format: uri
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        recurring:
+          type: boolean
+        recur_cycle:
+          type: string
+          enum: [weekly, monthly, quarterly, annual]
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ── MARKETPLACE LISTING ──────────────────────────────────────────
+    MarketplaceListing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vehicle_id:
+          type: string
+          format: uuid
+          nullable: true
+        dealership_id:
+          type: string
+          format: uuid
+          nullable: true
+        c2c_seller_id:
+          type: string
+          format: uuid
+          nullable: true
+        listing_type:
+          type: string
+          enum: [dealer, c2c]
+        slug:
+          type: string
+        title:
+          type: string
+        asking_price:
+          $ref: '#/components/schemas/BdtAmount'
+        original_price:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        price_drop_flag:
+          type: boolean
+        imv_p25:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        imv_p50:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        imv_p75:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        imv_sample_size:
+          type: integer
+          nullable: true
+        deal_score:
+          type: number
+          format: float
+          nullable: true
+          description: "(asking_price - imv_p50) / imv_p50. Negative = below market."
+        deal_rating:
+          $ref: '#/components/schemas/DealRating'
+        year:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        variant:
+          type: string
+          nullable: true
+        body_type:
+          type: string
+          nullable: true
+        fuel_type:
+          $ref: '#/components/schemas/FuelType'
+        transmission:
+          $ref: '#/components/schemas/TransmissionType'
+        condition:
+          $ref: '#/components/schemas/VehicleCondition'
+        mileage_km:
+          type: integer
+        mileage_bucket:
+          type: string
+        color:
+          type: string
+          nullable: true
+        engine_cc:
+          type: integer
+          nullable: true
+        district:
+          type: string
+        division:
+          type: string
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehiclePhoto'
+        photo_count:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ListingStatus'
+        is_featured:
+          type: boolean
+        featured_slot:
+          type: string
+          nullable: true
+        featured_until:
+          type: string
+          format: date-time
+          nullable: true
+        views:
+          type: integer
+        enquiries:
+          type: integer
+        saves:
+          type: integer
+        dealer:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string, format: uuid }
+            business_name: { type: string }
+            slug: { type: string }
+            logo_url: { type: string, format: uri }
+            rating: { type: number }
+            review_count: { type: integer }
+            district: { type: string }
+            whatsapp_number: { type: string }
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    MarketplaceSearchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketplaceListing'
+        facets:
+          type: object
+          properties:
+            make:
+              type: object
+              additionalProperties:
+                type: integer
+            body_type:
+              type: object
+              additionalProperties:
+                type: integer
+            fuel_type:
+              type: object
+              additionalProperties:
+                type: integer
+            transmission:
+              type: object
+              additionalProperties:
+                type: integer
+            deal_rating:
+              type: object
+              additionalProperties:
+                type: integer
+            district:
+              type: object
+              additionalProperties:
+                type: integer
+            condition:
+              type: object
+              additionalProperties:
+                type: integer
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    SubmitEnquiryDto:
+      type: object
+      required: [listing_id, buyer_name, buyer_phone]
+      properties:
+        listing_id:
+          type: string
+          format: uuid
+        buyer_name:
+          type: string
+          maxLength: 255
+        buyer_phone:
+          type: string
+          maxLength: 20
+        message:
+          type: string
+          maxLength: 500
+          nullable: true
+
+    # ── IMV ───────────────────────────────────────────────────────────
+    ImvCluster:
+      type: object
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        mileage_bucket:
+          type: string
+        condition:
+          $ref: '#/components/schemas/VehicleCondition'
+        district:
+          type: string
+        p5:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        p25:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        p50:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        p75:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        p95:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+        sample_size:
+          type: integer
+        confidence:
+          type: string
+          enum: [none, low, medium, high]
+        pct_change_30d:
+          type: number
+          nullable: true
+        trend_direction:
+          type: string
+          enum: [up, down, stable]
+          nullable: true
+        last_calculated_at:
+          type: string
+          format: date-time
+
+    # ── AUTOMATION ───────────────────────────────────────────────────
+    AutomationRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        channel:
+          $ref: '#/components/schemas/AutomationChannel'
+        rule_type:
+          type: string
+        name:
+          type: string
+        trigger_event:
+          type: string
+        conditions:
+          type: object
+          additionalProperties: true
+        actions:
+          type: object
+          additionalProperties: true
+        sequence_steps:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              step: { type: integer }
+              delay_hours: { type: integer }
+              condition: { type: string }
+              channel: { type: string }
+              template: { type: string }
+              variables:
+                type: object
+                additionalProperties:
+                  type: string
+        is_active:
+          type: boolean
+        execution_count:
+          type: integer
+        last_executed_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AutomationLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        rule_id:
+          type: string
+          format: uuid
+          nullable: true
+        channel:
+          $ref: '#/components/schemas/AutomationChannel'
+        trigger_event:
+          type: string
+        contact_id:
+          type: string
+          format: uuid
+          nullable: true
+        contact_type:
+          type: string
+          enum: [lead, customer]
+          nullable: true
+        vehicle_id:
+          type: string
+          format: uuid
+          nullable: true
+        template_name:
+          type: string
+          nullable: true
+        message_preview:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [queued, sent, delivered, failed, bounced, opted_out, skipped]
+        provider:
+          type: string
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        retry_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    WhatsAppTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        body:
+          type: string
+        category:
+          type: string
+          enum: [quick_reply, sequence, away, greeting, campaign]
+        language:
+          $ref: '#/components/schemas/LanguagePref'
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+
+    # ── SUBSCRIPTION & INVOICE ────────────────────────────────────────
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        status:
+          type: string
+          enum: [active, grace_period, expired, cancelled, trial]
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        auto_renew:
+          type: boolean
+        monthly_price_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+        features:
+          type: object
+          additionalProperties: true
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_no:
+          type: string
+        type:
+          type: string
+          enum: [subscription, per_lead, c2c_listing, featured_boost, valuation]
+        amount_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+        total_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+        status:
+          type: string
+          enum: [pending, paid, failed, refunded, waived]
+        due_date:
+          type: string
+          format: date
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        period_start:
+          type: string
+          format: date
+          nullable: true
+        period_end:
+          type: string
+          format: date
+          nullable: true
+        pdf_url:
+          type: string
+          format: uri
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ── MAESTRO ───────────────────────────────────────────────────────
+    MaestroInsight:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [PRICING, DEMAND, CONVERSION, EXPENSE, AUTOMATION, RECON_QUALITY]
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+        title:
+          type: string
+        message:
+          type: string
+        supporting_data:
+          type: object
+          additionalProperties: true
+        deep_link:
+          type: string
+          nullable: true
+        is_actioned:
+          type: boolean
+        is_dismissed:
+          type: boolean
+        generated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    # ── ANALYTICS ─────────────────────────────────────────────────────
+    PerformanceMetrics:
+      type: object
+      properties:
+        period:
+          type: string
+          example: "2025-01"
+        units_sold:
+          type: integer
+        revenue_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for non-Owner/Manager roles"
+        gross_profit_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for non-Owner/Manager roles"
+        gross_profit_per_unit:
+          $ref: '#/components/schemas/BdtAmount'
+          nullable: true
+          description: "null for non-Owner/Manager roles"
+        new_leads:
+          type: integer
+        lead_conversion_rate:
+          type: number
+          format: float
+          description: Percentage
+        avg_days_to_sell:
+          type: number
+          format: float
+          nullable: true
+        inventory_count:
+          type: object
+          properties:
+            available: { type: integer }
+            in_recon: { type: integer }
+            reserved: { type: integer }
+            acquired: { type: integer }
+
+    # ── WEBSITE BUILDER ───────────────────────────────────────────────
+    DealerWebsite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        subdomain:
+          type: string
+        custom_domain:
+          type: string
+          nullable: true
+        custom_domain_verified:
+          type: boolean
+        status:
+          type: string
+          enum: [active, suspended, maintenance]
+        meta_title:
+          type: string
+          nullable: true
+        meta_description:
+          type: string
+          nullable: true
+        google_analytics_id:
+          type: string
+          nullable: true
+        facebook_pixel_id:
+          type: string
+          nullable: true
+        gsc_verified:
+          type: boolean
+        gmc_merchant_id:
+          type: string
+          nullable: true
+        gmc_feed_enabled:
+          type: boolean
+        gmc_last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+        fb_catalog_id:
+          type: string
+          nullable: true
+        fb_catalog_enabled:
+          type: boolean
+        fb_page_id:
+          type: string
+          nullable: true
+
+    # ── ADMIN ─────────────────────────────────────────────────────────
+    AdminDealerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        business_name:
+          type: string
+        slug:
+          type: string
+        owner_name:
+          type: string
+        phone:
+          type: string
+        district:
+          type: string
+        status:
+          type: string
+          enum: [pending_approval, active, suspended, terminated]
+        subscription_tier:
+          $ref: '#/components/schemas/SubscriptionTier'
+        listing_count:
+          type: integer
+        mrr_bdt:
+          $ref: '#/components/schemas/BdtAmount'
+        last_active_at:
+          type: string
+          format: date-time
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+
+    ApproveDealerDto:
+      type: object
+      properties:
+        notes:
+          type: string
+          nullable: true
+
+    SuspendDealerDto:
+      type: object
+      required: [reason_code]
+      properties:
+        reason_code:
+          type: string
+          enum: [payment_failure, policy_violation, fraud_investigation, suspicious_pattern]
+        notes:
+          type: string
+          nullable: true
+
+    ModerationDecisionDto:
+      type: object
+      required: [outcome]
+      properties:
+        outcome:
+          type: string
+          enum: [approved, rejected, flagged]
+        reason_code:
+          type: string
+          enum: [fake_photos, stock_photos, price_out_of_range, specs_mismatch, duplicate_listing, invalid_contact, competitor_watermark, incomplete_info, suspicious_seller]
+          nullable: true
+          description: Required when outcome is rejected
+        notes:
+          type: string
+          nullable: true
+
+    BroadcastMessageDto:
+      type: object
+      required: [title, body, channel, target_type]
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        body:
+          type: string
+        channel:
+          type: string
+          enum: [sms, in_app, both]
+        target_type:
+          type: string
+          enum: [all_dealers, plan_tier, district, specific_dealers]
+        target_filter:
+          type: object
+          additionalProperties: true
+          nullable: true
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+# ─────────────────────────────────────────────────────────────────
+# TAGS (for grouping in UI)
+# ─────────────────────────────────────────────────────────────────
+tags:
+  - name: Auth
+    description: Registration, OTP, login, token management
+  - name: Vehicles
+    description: Dealer inventory management
+  - name: Recon
+    description: Vehicle reconditioning workflow
+  - name: Leads
+    description: CRM lead pipeline management
+  - name: Customers
+    description: Customer profile management
+  - name: Deals
+    description: Deal recording and approval
+  - name: Expenses
+    description: Type 1 (vehicle) and Type 2 (operational) expenses
+  - name: Analytics
+    description: Performance dashboards and Maestro AI insights
+  - name: Automation
+    description: WhatsApp, Facebook, social, email, SMS automation rules and logs
+  - name: Marketplace
+    description: Public vehicle search, listing detail, buyer enquiries
+  - name: IMV
+    description: Intelligent Market Value pricing engine
+  - name: Website
+    description: Dealer microsite builder and channel connections
+  - name: Payments
+    description: bKash, Nagad, SSLCommerz, subscriptions, invoices
+  - name: Admin
+    description: Platform administration (IP-restricted, admin JWT required)
+  - name: Feeds
+    description: Google Merchant Center and Facebook Catalog feeds
+  - name: Health
+    description: Service health checks
+
+# ─────────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────────
+paths:
+
+  # ══════════════════════════════════════════════════════════════
+  # AUTH
+  # ══════════════════════════════════════════════════════════════
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, full_name]
+              properties:
+                phone:
+                  type: string
+                  example: "+8801711234567"
+                full_name:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+                  description: Optional — OTP login available without password
+      responses:
+        '201':
+          description: Registration successful. OTP sent via SMS.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: "OTP sent to +8801711234567" }
+        '409':
+          description: Phone number already registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+              example:
+                success: false
+                error: { code: VALIDATION_DUPLICATE, message: "Phone number already registered" }
+                request_id: "550e8400-e29b-41d4-a716-446655440000"
+
+  /auth/otp/send:
+    post:
+      tags: [Auth]
+      summary: Send OTP to phone number
+      description: Rate-limited to 3 requests per phone per 10 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, purpose]
+              properties:
+                phone:
+                  type: string
+                  example: "+8801711234567"
+                purpose:
+                  type: string
+                  enum: [login, registration, password_reset]
+      responses:
+        '200':
+          description: OTP sent. TTL 5 minutes, max 5 attempts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      expires_in_seconds: { type: integer, example: 300 }
+        '429':
+          description: Rate limit exceeded (3 OTPs per 10 minutes)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /auth/otp/verify:
+    post:
+      tags: [Auth]
+      summary: Verify OTP and receive JWT pair
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code, purpose]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  pattern: '^\d{6}$'
+                purpose:
+                  type: string
+                  enum: [login, registration, password_reset]
+      responses:
+        '200':
+          description: OTP verified. JWT pair returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      refresh_token: { type: string }
+                      expires_in: { type: integer, example: 900 }
+                      user: { $ref: '#/components/schemas/UserProfile' }
+        '401':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with phone + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, password]
+              properties:
+                phone:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      refresh_token: { type: string }
+                      expires_in: { type: integer, example: 900 }
+                      user: { $ref: '#/components/schemas/UserProfile' }
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      description: |
+        Implements refresh token rotation. The provided refresh token is invalidated
+        and a new pair is issued. If a previously revoked token is presented,
+        ALL sessions for the user are immediately revoked (rotation attack detection).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: New token pair issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      refresh_token: { type: string }
+                      expires_in: { type: integer, example: 900 }
+        '401':
+          description: Refresh token invalid, expired, or revoked
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate current session
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Session invalidated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string, example: "Logged out successfully" }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user profile
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/UserProfile' }
+
+  # ══════════════════════════════════════════════════════════════
+  # VEHICLES
+  # ══════════════════════════════════════════════════════════════
+
+  /vehicles:
+    get:
+      tags: [Vehicles]
+      summary: List dealer vehicles
+      description: Returns vehicles for the authenticated dealer. Financial fields are null for Manager/Salesperson roles.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/VehicleStatus'
+        - name: make
+          in: query
+          schema: { type: string }
+        - name: model
+          in: query
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, days_on_lot, asking_price, mileage_km]
+            default: created_at
+        - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: Paginated list of vehicles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Vehicle' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+    post:
+      tags: [Vehicles]
+      summary: Create a new vehicle (all roles)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateVehicleDto' }
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Vehicle' }
+        '402':
+          description: Listing limit reached for current plan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+              example:
+                success: false
+                error:
+                  code: VEHICLE_LISTING_LIMIT
+                  message: "Your Starter plan allows 50 listings. Upgrade to add more."
+                  upgrade_url: "/settings/subscription"
+                request_id: "uuid"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /vehicles/aging:
+    get:
+      tags: [Vehicles]
+      summary: Get aging watchlist (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4]
+            description: "1=30d 2=45d 3=60d 4=90d. Omit for all tiers."
+      responses:
+        '200':
+          description: Vehicles organized by aging tier with daily erosion estimates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Vehicle'
+                        - type: object
+                          properties:
+                            aging_tier: { type: integer, enum: [1, 2, 3, 4] }
+                            daily_erosion_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                            recommended_price: { $ref: '#/components/schemas/BdtAmount' }
+
+  /vehicles/{id}:
+    get:
+      tags: [Vehicles]
+      summary: Get full vehicle stock card
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Full vehicle record with role-filtered fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Vehicle' }
+        '404':
+          description: Vehicle not found (or belongs to another tenant)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+    put:
+      tags: [Vehicles]
+      summary: Update vehicle (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateVehicleDto' }
+      responses:
+        '200':
+          description: Vehicle updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Vehicle' }
+        '403':
+          description: Insufficient role
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+    delete:
+      tags: [Vehicles]
+      summary: Soft-delete vehicle (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Vehicle soft-deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string }
+
+  /vehicles/{id}/status:
+    put:
+      tags: [Vehicles]
+      summary: Change vehicle status (Manager+ only)
+      description: |
+        Valid transitions: acquired→in_recon, acquired→available, in_recon→available,
+        available→reserved, available→scrapped, reserved→available, reserved→sold.
+        Forbidden: sold→any, scrapped→any.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateVehicleStatusDto' }
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Vehicle' }
+        '422':
+          description: Invalid status transition
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+              example:
+                success: false
+                error:
+                  code: VEHICLE_STATUS_TRANSITION_INVALID
+                  message: "Cannot transition vehicle from sold to available"
+                request_id: "uuid"
+
+  /vehicles/{id}/photos:
+    post:
+      tags: [Vehicles]
+      summary: Upload photos (all roles)
+      description: |
+        Multipart form upload. Each photo is compressed via Sharp to WebP, max 150KB.
+        Minimum 4 photos required before marketplace publish.
+        Maximum 30 photos per vehicle.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  maxItems: 30
+      responses:
+        '200':
+          description: Photos uploaded and processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      photos:
+                        type: array
+                        items: { $ref: '#/components/schemas/VehiclePhoto' }
+                      photo_count: { type: integer }
+
+  /vehicles/{id}/photos/reorder:
+    put:
+      tags: [Vehicles]
+      summary: Reorder photos / set primary (all roles)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photo_orders]
+              properties:
+                photo_orders:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      url: { type: string }
+                      sort_order: { type: integer }
+                      is_primary: { type: boolean }
+      responses:
+        '200':
+          description: Photo order updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      photos:
+                        type: array
+                        items: { $ref: '#/components/schemas/VehiclePhoto' }
+
+  /vehicles/{id}/marketplace-publish:
+    put:
+      tags: [Vehicles]
+      summary: Toggle marketplace visibility (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [published]
+              properties:
+                published: { type: boolean }
+      responses:
+        '200':
+          description: Marketplace visibility updated; sync triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      marketplace_published: { type: boolean }
+                      sync_triggered: { type: boolean }
+
+  /vehicles/{id}/force-sync:
+    post:
+      tags: [Vehicles]
+      summary: Manually trigger marketplace sync (Manager+)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Sync job queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      job_id: { type: string }
+                      message: { type: string, example: "Sync job queued. Update visible within 2 seconds." }
+
+  /vehicles/{id}/vin-decode:
+    get:
+      tags: [Vehicles]
+      summary: Decode VIN via NHTSA API (cached)
+      description: Returns decoded specs for the given VIN. Uses Redis cache (TTL 90 days).
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+          name: vin
+          description: 17-character VIN string
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 17
+            maxLength: 17
+      responses:
+        '200':
+          description: VIN decoded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      make: { type: string }
+                      model: { type: string }
+                      year: { type: integer }
+                      body_type: { type: string }
+                      engine_cc: { type: integer }
+                      fuel_type: { type: string }
+                      transmission: { type: string }
+                      source: { type: string, enum: [cache, nhtsa, bd_supplement, manual] }
+        '422':
+          description: Invalid VIN format
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  # ══════════════════════════════════════════════════════════════
+  # RECON
+  # ══════════════════════════════════════════════════════════════
+
+  /vehicles/{id}/recon:
+    get:
+      tags: [Recon]
+      summary: Get recon assessment for a vehicle (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Recon assessment with all tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/ReconAssessment' }
+        '404':
+          description: No assessment created yet
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+    post:
+      tags: [Recon]
+      summary: Create recon assessment (Manager+ only)
+      description: Creates assessment and transitions vehicle to in_recon status.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                engine_status: { type: string, enum: [ok, needs_work, critical] }
+                body_status: { type: string, enum: [ok, needs_work, critical] }
+                paint_status: { type: string, enum: [ok, needs_work, critical] }
+                interior_status: { type: string, enum: [ok, needs_work, critical] }
+                electricals_status: { type: string, enum: [ok, needs_work, critical] }
+                tyres_status: { type: string, enum: [ok, needs_work, critical] }
+                ac_status: { type: string, enum: [ok, needs_work, critical] }
+                brakes_status: { type: string, enum: [ok, needs_work, critical] }
+                overall_notes: { type: string }
+      responses:
+        '201':
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/ReconAssessment' }
+
+  /vehicles/{id}/recon/tasks:
+    post:
+      tags: [Recon]
+      summary: Add recon task (Manager+; Salesperson for assigned tasks)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateReconTaskDto' }
+      responses:
+        '201':
+          description: Recon task created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/ReconTask' }
+
+  /vehicles/{vehicleId}/recon/tasks/{taskId}/complete:
+    post:
+      tags: [Recon]
+      summary: Mark recon task complete (auto-creates vehicle_expense Type 1)
+      description: |
+        On completion: creates vehicle_expense record with actual_cost,
+        updates vehicle.recon_total, checks if all tasks complete
+        (if yes: emits recon.all_tasks_complete event → vehicle ready for available status).
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompleteReconTaskDto' }
+      responses:
+        '200':
+          description: Task completed; vehicle_expense auto-created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      task: { $ref: '#/components/schemas/ReconTask' }
+                      all_tasks_complete: { type: boolean }
+                      vehicle_recon_total: { $ref: '#/components/schemas/BdtAmount' }
+
+  # ══════════════════════════════════════════════════════════════
+  # LEADS
+  # ══════════════════════════════════════════════════════════════
+
+  /leads:
+    get:
+      tags: [Leads]
+      summary: List leads (role-filtered)
+      description: Owner/Manager see all leads. Salesperson sees own leads by default (sees_all_leads setting overrides).
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: stage
+          in: query
+          schema: { $ref: '#/components/schemas/LeadStage' }
+        - name: priority
+          in: query
+          schema: { $ref: '#/components/schemas/LeadPriority' }
+        - name: source
+          in: query
+          schema: { $ref: '#/components/schemas/LeadSource' }
+        - name: assigned_to
+          in: query
+          schema: { type: string, format: uuid }
+        - name: vehicle_id
+          in: query
+          schema: { type: string, format: uuid }
+        - name: q
+          in: query
+          description: Search by buyer name or phone
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, next_follow_up, lead_score, updated_at]
+            default: created_at
+        - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: Paginated lead list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Lead' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+    post:
+      tags: [Leads]
+      summary: Create a lead (all roles)
+      description: Runs deduplication check. Same phone + same vehicle within 30 days = merge (increment enquiry_count).
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateLeadDto' }
+      responses:
+        '201':
+          description: Lead created (or merged duplicate)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Lead' }
+                  meta:
+                    type: object
+                    properties:
+                      was_merged: { type: boolean }
+
+  /leads/follow-ups-today:
+    get:
+      tags: [Leads]
+      summary: Get leads with follow-up due today (role-filtered)
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Leads due for follow-up today
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Lead' }
+
+  /leads/{id}:
+    get:
+      tags: [Leads]
+      summary: Get lead detail (role-filtered)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Full lead record with interactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Lead'
+                      - type: object
+                        properties:
+                          interactions:
+                            type: array
+                            items: { $ref: '#/components/schemas/LeadInteraction' }
+
+    put:
+      tags: [Leads]
+      summary: Update lead details (role-filtered)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyer_name: { type: string }
+                buyer_email: { type: string, format: email }
+                buyer_district: { type: string }
+                vehicle_id: { type: string, format: uuid }
+                budget_min: { $ref: '#/components/schemas/BdtAmount' }
+                budget_max: { $ref: '#/components/schemas/BdtAmount' }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Lead updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Lead' }
+
+  /leads/{id}/stage:
+    put:
+      tags: [Leads]
+      summary: Change pipeline stage
+      description: Moving to 'lost' requires lost_reason. Returns 422 if lost_reason is absent.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateLeadStageDto' }
+      responses:
+        '200':
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Lead' }
+        '422':
+          description: lost_reason required when moving to lost
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+              example:
+                success: false
+                error:
+                  code: LEAD_LOST_REASON_REQUIRED
+                  message: "Please select a reason for marking this lead as lost"
+                request_id: "uuid"
+
+  /leads/{id}/activity:
+    post:
+      tags: [Leads]
+      summary: Log an interaction on a lead (all roles)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogInteractionDto' }
+      responses:
+        '201':
+          description: Interaction logged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/LeadInteraction' }
+
+  /leads/{id}/follow-up:
+    put:
+      tags: [Leads]
+      summary: Schedule or update follow-up (all roles)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleFollowUpDto' }
+      responses:
+        '200':
+          description: Follow-up scheduled; BullMQ reminder job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Lead' }
+
+  /leads/{id}/assign:
+    put:
+      tags: [Leads]
+      summary: Reassign lead to another salesperson (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assigned_to]
+              properties:
+                assigned_to: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Lead reassigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Lead' }
+
+  # ══════════════════════════════════════════════════════════════
+  # CUSTOMERS
+  # ══════════════════════════════════════════════════════════════
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers (Manager+ / own for Salesperson)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: q
+          in: query
+          description: Search by name or phone
+          schema: { type: string }
+      responses:
+        '200':
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Customer' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /customers/{id}:
+    get:
+      tags: [Customers]
+      summary: Get customer profile with lead and deal history
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Customer'
+                      - type: object
+                        properties:
+                          leads:
+                            type: array
+                            items: { $ref: '#/components/schemas/Lead' }
+                          deals:
+                            type: array
+                            items: { $ref: '#/components/schemas/Deal' }
+
+    put:
+      tags: [Customers]
+      summary: Update customer preferences (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferred_makes: { type: array, items: { type: string } }
+                preferred_body_types: { type: array, items: { type: string } }
+                budget_min: { $ref: '#/components/schemas/BdtAmount' }
+                budget_max: { $ref: '#/components/schemas/BdtAmount' }
+                opted_in_sms: { type: boolean }
+                opted_in_whatsapp: { type: boolean }
+                opted_in_email: { type: boolean }
+                opted_in_inventory_alerts: { type: boolean }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Customer' }
+
+  # ══════════════════════════════════════════════════════════════
+  # DEALS
+  # ══════════════════════════════════════════════════════════════
+
+  /deals:
+    get:
+      tags: [Deals]
+      summary: List deals (role-filtered)
+      description: Owner/Manager see all. Salesperson sees own deals only.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/DealStatus' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, delivered_at, sale_price]
+            default: created_at
+        - $ref: '#/components/parameters/OrderParam'
+      responses:
+        '200':
+          description: Deal list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Deal' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+    post:
+      tags: [Deals]
+      summary: Create a new deal (all roles on own lead)
+      description: |
+        Reserves the vehicle (status → reserved). If discount_amount exceeds
+        dealership.discount_threshold_pct, deal goes to pending_approval status.
+        Otherwise auto-approved.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDealDto' }
+      responses:
+        '201':
+          description: Deal created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Deal' }
+
+  /deals/{id}:
+    get:
+      tags: [Deals]
+      summary: Get deal record (role-filtered)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Full deal record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Deal' }
+
+  /deals/{id}/approve:
+    post:
+      tags: [Deals]
+      summary: Approve deal (Manager+ only; Manager within threshold, Owner for above)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Deal approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Deal' }
+        '403':
+          description: Discount exceeds manager threshold — Owner approval required
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /deals/{id}/deliver:
+    post:
+      tags: [Deals]
+      summary: Mark deal as delivered (Manager+ only)
+      description: |
+        Transitions deal to delivered. Vehicle status → sold.
+        Marketplace listing → sold (archived after 7 days).
+        Triggers post-sale automation sequence.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Deal delivered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Deal' }
+
+  /deals/{id}/cancel:
+    post:
+      tags: [Deals]
+      summary: Cancel deal (Manager+ only)
+      description: Releases vehicle reservation (vehicle → available). Lead → lost.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Deal cancelled; vehicle unreserved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Deal' }
+
+  /deals/{id}/bill-of-sale:
+    post:
+      tags: [Deals]
+      summary: Generate Bill of Sale PDF (Manager+ / own deal for Salesperson)
+      description: Puppeteer renders PDF, stores in R2. Returns signed URL. Target < 5 seconds.
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: PDF generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      bill_of_sale_url: { type: string, format: uri }
+                      version: { type: integer }
+
+  /deals/{id}/payments:
+    get:
+      tags: [Deals]
+      summary: List deal payments (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Payment history for this deal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        amount: { $ref: '#/components/schemas/BdtAmount' }
+                        payment_method: { $ref: '#/components/schemas/PaymentMethod' }
+                        payment_type: { type: string }
+                        reference_no: { type: string, nullable: true }
+                        paid_at: { type: string, format: date-time }
+
+    post:
+      tags: [Deals]
+      summary: Record a payment on a deal (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecordPaymentDto' }
+      responses:
+        '201':
+          description: Payment recorded; balance_due updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      payment_id: { type: string, format: uuid }
+                      new_balance_due: { $ref: '#/components/schemas/BdtAmount' }
+                      total_paid: { $ref: '#/components/schemas/BdtAmount' }
+
+  # ══════════════════════════════════════════════════════════════
+  # EXPENSES
+  # ══════════════════════════════════════════════════════════════
+
+  /vehicles/{id}/expenses:
+    get:
+      tags: [Expenses]
+      summary: List Type 1 vehicle expenses (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Vehicle expense list with total
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      expenses:
+                        type: array
+                        items: { $ref: '#/components/schemas/VehicleExpense' }
+                      total: { $ref: '#/components/schemas/BdtAmount' }
+
+    post:
+      tags: [Expenses]
+      summary: Add Type 1 vehicle expense (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateVehicleExpenseDto' }
+      responses:
+        '201':
+          description: Expense added; vehicle.recon_total updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/VehicleExpense' }
+
+  /expenses/operational:
+    get:
+      tags: [Expenses]
+      summary: List Type 2 operational expenses (Owner sees full; Manager sees totals only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: month
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+            description: "Filter by month. Format: YYYY-MM"
+      responses:
+        '200':
+          description: Operational expenses (line items for Owner; totals-only object for Manager)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        nullable: true
+                        items: { $ref: '#/components/schemas/OperationalExpense' }
+                        description: "null for Manager role"
+                      totals_by_category:
+                        type: object
+                        additionalProperties: { $ref: '#/components/schemas/BdtAmount' }
+                      grand_total: { $ref: '#/components/schemas/BdtAmount' }
+
+    post:
+      tags: [Expenses]
+      summary: Add Type 2 operational expense (Owner only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_id, amount, date, payment_method]
+              properties:
+                category_id: { type: string, format: uuid }
+                amount: { $ref: '#/components/schemas/BdtAmount' }
+                date: { type: string, format: date }
+                payment_method: { $ref: '#/components/schemas/PaymentMethod' }
+                reference_no: { type: string, nullable: true }
+                notes: { type: string, nullable: true }
+                recurring: { type: boolean, default: false }
+                recur_cycle:
+                  type: string
+                  enum: [weekly, monthly, quarterly, annual]
+                  nullable: true
+      responses:
+        '201':
+          description: Expense added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/OperationalExpense' }
+
+  /expenses/categories:
+    get:
+      tags: [Expenses]
+      summary: List expense categories
+      description: Returns both Type 1 (vehicle) and Type 2 (operational) categories.
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [vehicle, operational]
+      responses:
+        '200':
+          description: Expense categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        type: { type: string }
+                        name: { type: string }
+                        slug: { type: string }
+                        icon: { type: string }
+
+  # ══════════════════════════════════════════════════════════════
+  # ANALYTICS + MAESTRO
+  # ══════════════════════════════════════════════════════════════
+
+  /analytics/performance:
+    get:
+      tags: [Analytics]
+      summary: Get performance metrics dashboard
+      description: Financial metrics (revenue, GP) return null for Salesperson role.
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [today, this_week, this_month, last_month, last_90_days, custom]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Required when period=custom
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Required when period=custom
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/PerformanceMetrics' }
+
+  /analytics/staff:
+    get:
+      tags: [Analytics]
+      summary: Staff performance table (Owner sees all; Salesperson sees own row only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [this_month, last_month, last_90_days]
+            default: this_month
+      responses:
+        '200':
+          description: Staff performance data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        user_id: { type: string, format: uuid }
+                        full_name: { type: string }
+                        leads_handled: { type: integer }
+                        deals_closed: { type: integer }
+                        conversion_rate: { type: number }
+                        avg_response_time_hours: { type: number }
+                        revenue_generated: { $ref: '#/components/schemas/BdtAmount', nullable: true }
+
+  /analytics/maestro/insights:
+    get:
+      tags: [Analytics]
+      summary: Get Maestro AI insights (Manager+ only)
+      description: Returns top 5 insights from last nightly run. Sorted by priority.
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Maestro insights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/MaestroInsight' }
+
+  /analytics/maestro/insights/{id}/action:
+    post:
+      tags: [Analytics]
+      summary: Mark Maestro insight as actioned
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Insight marked actioned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/MaestroInsight' }
+
+  /analytics/maestro/insights/{id}/dismiss:
+    post:
+      tags: [Analytics]
+      summary: Dismiss Maestro insight
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Insight dismissed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/MaestroInsight' }
+
+  /analytics/daily-summaries:
+    get:
+      tags: [Analytics]
+      summary: Get daily summary history (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - name: limit
+          in: query
+          schema: { type: integer, default: 7, maximum: 30 }
+      responses:
+        '200':
+          description: List of past daily summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string, format: date }
+                        units_sold: { type: integer }
+                        revenue_bdt: { $ref: '#/components/schemas/BdtAmount', nullable: true }
+                        new_leads: { type: integer }
+                        urgent_action_count: { type: integer }
+
+  # ══════════════════════════════════════════════════════════════
+  # AUTOMATION
+  # ══════════════════════════════════════════════════════════════
+
+  /automation/rules:
+    get:
+      tags: [Automation]
+      summary: List all automation rules (Manager+ full; Salesperson read-only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: channel
+          in: query
+          schema: { $ref: '#/components/schemas/AutomationChannel' }
+        - name: is_active
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Automation rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AutomationRule' }
+
+    post:
+      tags: [Automation]
+      summary: Create automation rule (Manager+ only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [channel, rule_type, name, trigger_event]
+              properties:
+                channel: { $ref: '#/components/schemas/AutomationChannel' }
+                rule_type: { type: string }
+                name: { type: string }
+                trigger_event: { type: string }
+                conditions: { type: object, additionalProperties: true }
+                actions: { type: object, additionalProperties: true }
+                sequence_steps: { type: array, items: { type: object } }
+                is_active: { type: boolean, default: true }
+      responses:
+        '201':
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/AutomationRule' }
+
+  /automation/rules/{id}:
+    put:
+      tags: [Automation]
+      summary: Update automation rule (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                conditions: { type: object }
+                actions: { type: object }
+                sequence_steps: { type: array, items: { type: object } }
+                is_active: { type: boolean }
+      responses:
+        '200':
+          description: Rule updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/AutomationRule' }
+
+    delete:
+      tags: [Automation]
+      summary: Delete automation rule (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Rule deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      message: { type: string }
+
+  /automation/rules/{id}/test:
+    post:
+      tags: [Automation]
+      summary: Test an automation rule manually (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                test_contact_phone: { type: string }
+                test_lead_id: { type: string, format: uuid, nullable: true }
+      responses:
+        '200':
+          description: Test executed (dry-run by default, sends if send=true)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      would_execute: { type: boolean }
+                      rendered_message: { type: string }
+                      rate_limit_remaining: { type: integer }
+
+  /automation/logs:
+    get:
+      tags: [Automation]
+      summary: Get automation event logs (Manager+ only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: channel
+          in: query
+          schema: { $ref: '#/components/schemas/AutomationChannel' }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, sent, delivered, failed, bounced, opted_out, skipped]
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Automation logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AutomationLog' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /automation/whatsapp/templates:
+    get:
+      tags: [Automation]
+      summary: List WhatsApp quick-reply templates (all roles)
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Template list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WhatsAppTemplate' }
+
+    post:
+      tags: [Automation]
+      summary: Create or update WhatsApp template (Manager+ only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, body, category]
+              properties:
+                name: { type: string, maxLength: 100 }
+                body: { type: string }
+                category:
+                  type: string
+                  enum: [quick_reply, sequence, away, greeting, campaign]
+                language: { $ref: '#/components/schemas/LanguagePref' }
+                sort_order: { type: integer }
+      responses:
+        '201':
+          description: Template saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/WhatsAppTemplate' }
+
+  /automation/social/posts:
+    get:
+      tags: [Automation]
+      summary: Get social post queue (Manager+ full; Salesperson read-only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending_approval, scheduled, published, failed, cancelled]
+      responses:
+        '200':
+          description: Post queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        vehicle_id: { type: string, format: uuid, nullable: true }
+                        platform: { type: string }
+                        caption: { type: string }
+                        image_urls: { type: array, items: { type: string } }
+                        scheduled_at: { type: string, format: date-time }
+                        status: { type: string }
+                        platform_post_id: { type: string, nullable: true }
+                        published_at: { type: string, format: date-time, nullable: true }
+
+    post:
+      tags: [Automation]
+      summary: Schedule a social media post (Manager+ only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [platform, caption, scheduled_at]
+              properties:
+                vehicle_id: { type: string, format: uuid, nullable: true }
+                platform:
+                  type: string
+                  enum: [facebook, instagram, both]
+                caption: { type: string }
+                hashtags: { type: string, nullable: true }
+                scheduled_at: { type: string, format: date-time }
+      responses:
+        '201':
+          description: Post scheduled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      status: { type: string }
+
+  /automation/sms/campaign:
+    post:
+      tags: [Automation]
+      summary: Launch SMS campaign (Owner only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, segment, message]
+              properties:
+                name: { type: string }
+                segment:
+                  type: string
+                  enum: [all, recent_buyers, active_leads, by_district, by_make, opted_in_only]
+                segment_filter:
+                  type: object
+                  additionalProperties: true
+                  nullable: true
+                  description: e.g. { "district": "Dhaka" } or { "make": "Toyota" }
+                message:
+                  type: string
+                  maxLength: 135
+                  description: "Max 135 chars — system appends 'Reply STOP to unsubscribe.' (25 chars)"
+                scheduled_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: "null = send immediately"
+      responses:
+        '201':
+          description: Campaign queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      campaign_id: { type: string, format: uuid }
+                      recipient_count: { type: integer }
+                      estimated_send_at: { type: string, format: date-time }
+
+  # ══════════════════════════════════════════════════════════════
+  # MARKETPLACE (PUBLIC)
+  # ══════════════════════════════════════════════════════════════
+
+  /marketplace/search:
+    get:
+      tags: [Marketplace]
+      summary: Search marketplace listings (public)
+      parameters:
+        - name: q
+          in: query
+          description: Full-text search
+          schema: { type: string }
+        - name: make
+          in: query
+          schema: { type: string }
+        - name: model
+          in: query
+          schema: { type: string }
+        - name: year_min
+          in: query
+          schema: { type: integer }
+        - name: year_max
+          in: query
+          schema: { type: integer }
+        - name: price_min
+          in: query
+          schema: { type: integer }
+        - name: price_max
+          in: query
+          schema: { type: integer }
+        - name: mileage_min
+          in: query
+          schema: { type: integer }
+        - name: mileage_max
+          in: query
+          schema: { type: integer }
+        - name: body_type
+          in: query
+          schema: { type: string }
+        - name: fuel_type
+          in: query
+          schema: { $ref: '#/components/schemas/FuelType' }
+        - name: transmission
+          in: query
+          schema: { $ref: '#/components/schemas/TransmissionType' }
+        - name: condition
+          in: query
+          schema: { $ref: '#/components/schemas/VehicleCondition' }
+        - name: district
+          in: query
+          schema: { type: string }
+        - name: deal_rating
+          in: query
+          schema: { $ref: '#/components/schemas/DealRating' }
+        - name: seller_type
+          in: query
+          schema: { type: string, enum: [dealer, private] }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [best_deal, newest, price_asc, price_desc, mileage_asc, most_viewed]
+            default: best_deal
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Search results with facets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/MarketplaceSearchResult' }
+
+  /marketplace/listings/{slug}:
+    get:
+      tags: [Marketplace]
+      summary: Get vehicle listing detail (public)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Listing detail with IMV data and dealer info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/MarketplaceListing' }
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /marketplace/dealers/{slug}:
+    get:
+      tags: [Marketplace]
+      summary: Get dealer profile page (public)
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Dealer profile with active listings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      dealer: { $ref: '#/components/schemas/Dealership' }
+                      listings:
+                        type: array
+                        items: { $ref: '#/components/schemas/MarketplaceListing' }
+                      listing_count: { type: integer }
+
+  /marketplace/leads:
+    post:
+      tags: [Marketplace]
+      summary: Submit buyer enquiry (public)
+      description: |
+        Creates a lead in the dealer's CRM. Triggers:
+        - Push notification to assigned salesperson
+        - WhatsApp Day 0 auto-reply (if dealer has WABA configured)
+        - Buyer confirmation SMS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmitEnquiryDto' }
+      responses:
+        '201':
+          description: Enquiry submitted; lead created in dealer CRM
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      lead_id: { type: string, format: uuid }
+                      message: { type: string, example: "Enquiry sent. The dealer will contact you shortly." }
+
+  /marketplace/c2c/listings:
+    post:
+      tags: [Marketplace]
+      summary: Create C2C listing (authenticated buyer/seller)
+      description: Listing enters moderation queue. Payment required before submission.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [make, model, year, mileage_km, fuel_type, transmission, condition, asking_price, district, photos]
+              properties:
+                make: { type: string }
+                model: { type: string }
+                year: { type: integer }
+                variant: { type: string }
+                mileage_km: { type: integer }
+                fuel_type: { $ref: '#/components/schemas/FuelType' }
+                transmission: { $ref: '#/components/schemas/TransmissionType' }
+                condition: { $ref: '#/components/schemas/VehicleCondition' }
+                asking_price: { $ref: '#/components/schemas/BdtAmount' }
+                district: { type: string }
+                description: { type: string, maxLength: 500 }
+                photos:
+                  type: array
+                  items: { type: string, format: uri }
+                  minItems: 4
+                  maxItems: 20
+                  description: R2 URLs of already-uploaded photos
+                condition_assessment:
+                  type: object
+                  properties:
+                    engine: { type: string, enum: [ok, needs_work, critical] }
+                    body: { type: string, enum: [ok, needs_work, critical] }
+                    paint: { type: string, enum: [ok, needs_work, critical] }
+                    interior: { type: string, enum: [ok, needs_work, critical] }
+                    electricals: { type: string, enum: [ok, needs_work, critical] }
+                    tyres: { type: string, enum: [ok, needs_work, critical] }
+                    ac: { type: string, enum: [ok, needs_work, critical] }
+                    brakes: { type: string, enum: [ok, needs_work, critical] }
+                features:
+                  type: array
+                  items: { type: string }
+                contact_preference:
+                  type: string
+                  enum: [show_phone, whatsapp_only, form_only]
+                payment_transaction_id:
+                  type: string
+                  format: uuid
+                  description: Verified payment for listing fee (BDT 199)
+      responses:
+        '201':
+          description: Listing submitted for moderation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      listing_id: { type: string, format: uuid }
+                      status: { type: string, enum: [pending_moderation] }
+                      estimated_review_by: { type: string, format: date-time }
+
+  /marketplace/saved-vehicles:
+    post:
+      tags: [Marketplace]
+      summary: Save a vehicle to wishlist (authenticated buyer)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [listing_id]
+              properties:
+                listing_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Vehicle saved; price drop alert subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      saved_id: { type: string, format: uuid }
+
+  /marketplace/saved-searches:
+    post:
+      tags: [Marketplace]
+      summary: Save a search with alert preferences (authenticated buyer)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filters]
+              properties:
+                name: { type: string, nullable: true }
+                filters:
+                  type: object
+                  additionalProperties: true
+                  description: Same filter keys as /marketplace/search
+                alert_enabled: { type: boolean, default: true }
+                alert_channel:
+                  $ref: '#/components/schemas/AutomationChannel'
+      responses:
+        '201':
+          description: Search saved with alert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      saved_search_id: { type: string, format: uuid }
+
+  # ══════════════════════════════════════════════════════════════
+  # IMV
+  # ══════════════════════════════════════════════════════════════
+
+  /imv:
+    get:
+      tags: [IMV]
+      summary: Get IMV estimate for a specific cluster (public)
+      parameters:
+        - name: make
+          in: query
+          required: true
+          schema: { type: string }
+        - name: model
+          in: query
+          required: true
+          schema: { type: string }
+        - name: year
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: mileage_bucket
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: ['0-30K', '30-60K', '60-100K', '100K+']
+        - name: condition
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/VehicleCondition' }
+        - name: district
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: IMV cluster data (cached; TTL 3,600s)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/ImvCluster' }
+
+  /imv/trends:
+    get:
+      tags: [IMV]
+      summary: Get price trend data for a make/model (public)
+      parameters:
+        - name: make
+          in: query
+          required: true
+          schema: { type: string }
+        - name: model
+          in: query
+          required: true
+          schema: { type: string }
+        - name: district
+          in: query
+          schema: { type: string, description: "Defaults to national if omitted" }
+        - name: months
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 6
+      responses:
+        '200':
+          description: Price trend data points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string, format: date }
+                        avg_price: { $ref: '#/components/schemas/BdtAmount' }
+                        median_price: { $ref: '#/components/schemas/BdtAmount' }
+                        listing_count: { type: integer }
+
+  # ══════════════════════════════════════════════════════════════
+  # WEBSITE BUILDER
+  # ══════════════════════════════════════════════════════════════
+
+  /website:
+    get:
+      tags: [Website]
+      summary: Get dealer website configuration (Manager+ only)
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Website configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/DealerWebsite' }
+
+    put:
+      tags: [Website]
+      summary: Update website settings (Manager+ only)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                meta_title: { type: string, maxLength: 255 }
+                meta_description: { type: string, maxLength: 160 }
+                google_analytics_id: { type: string, nullable: true }
+                facebook_pixel_id: { type: string, nullable: true }
+      responses:
+        '200':
+          description: Website settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/DealerWebsite' }
+
+  /website/setup:
+    post:
+      tags: [Website]
+      summary: Run website setup wizard (Owner only)
+      description: Provisions subdomain, generates microsite, injects pixels, submits sitemap to GSC.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tagline]
+              properties:
+                tagline: { type: string, maxLength: 255 }
+                primary_color:
+                  type: string
+                  pattern: '^#[0-9A-Fa-f]{6}$'
+      responses:
+        '201':
+          description: Website live
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      subdomain: { type: string }
+                      website_url: { type: string, format: uri }
+                      listings_imported: { type: integer }
+
+  /website/custom-domain:
+    post:
+      tags: [Website]
+      summary: Initiate custom domain connection (Owner only; Business+ plan)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain:
+                  type: string
+                  example: "cars.mydealer.com.bd"
+      responses:
+        '200':
+          description: Domain instructions returned; verification started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      cname_name: { type: string, example: "cars" }
+                      cname_value: { type: string, example: "dealer.autoverse.com.bd" }
+                      cname_ttl: { type: integer, example: 3600 }
+                      verification_poll_seconds: { type: integer, example: 120 }
+                      verification_expires_in_minutes: { type: integer, example: 20 }
+
+  /website/custom-domain/verify:
+    post:
+      tags: [Website]
+      summary: Manually trigger domain verification check (Owner only)
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      verified: { type: boolean }
+                      message: { type: string }
+                      custom_domain: { type: string, nullable: true }
+
+  # ══════════════════════════════════════════════════════════════
+  # PAYMENTS
+  # ══════════════════════════════════════════════════════════════
+
+  /payments/bkash/create:
+    post:
+      tags: [Payments]
+      summary: Initiate bKash payment
+      description: |
+        Creates payment on bKash Tokenized Checkout API.
+        Returns bKash redirect URL. Idempotency key auto-generated
+        (SHA256 of dealerId:invoiceId:5-minute-bucket).
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_id]
+              properties:
+                invoice_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Payment initiated; redirect buyer to bkash_url
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      payment_id: { type: string }
+                      bkash_url: { type: string, format: uri }
+                      amount: { $ref: '#/components/schemas/BdtAmount' }
+        '503':
+          description: bKash gateway unavailable (circuit breaker open)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /payments/bkash/execute:
+    post:
+      tags: [Payments]
+      summary: Execute bKash payment (called after buyer returns from bKash URL)
+      description: |
+        IMPORTANT: Never mark payment as failed based on redirect status alone.
+        This endpoint always queries bKash API to confirm actual payment status
+        before updating invoice. Timeout recovery: 4 query attempts.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_id]
+              properties:
+                payment_id: { type: string }
+      responses:
+        '200':
+          description: Payment executed; subscription activated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [success, failed, pending] }
+                      transaction_id: { type: string, nullable: true }
+                      subscription_active: { type: boolean }
+
+  /payments/nagad/init:
+    post:
+      tags: [Payments]
+      summary: Initialize Nagad payment
+      description: RSA-encrypted and RSA-signed request to Nagad API.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_id]
+              properties:
+                invoice_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Nagad payment initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      payment_reference_id: { type: string }
+                      redirect_url: { type: string, format: uri }
+
+  /payments/nagad/complete:
+    post:
+      tags: [Payments]
+      summary: Complete Nagad payment (called after buyer returns)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_reference_id]
+              properties:
+                payment_reference_id: { type: string }
+      responses:
+        '200':
+          description: Payment completion result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [success, failed, pending] }
+                      transaction_id: { type: string, nullable: true }
+
+  /payments/sslcommerz/init:
+    post:
+      tags: [Payments]
+      summary: Initiate SSLCommerz payment (card + alternate methods)
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoice_id]
+              properties:
+                invoice_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: SSLCommerz session created; redirect to gateway URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      gateway_url: { type: string, format: uri }
+                      session_key: { type: string }
+
+  /payments/sslcommerz/ipn:
+    post:
+      tags: [Payments]
+      summary: SSLCommerz IPN callback (webhook — no auth)
+      description: |
+        Validates MD5 hash before processing. Verifies amount matches invoice.
+        ALWAYS returns HTTP 200 to SSLCommerz (even if rejected internally).
+        Activation only occurs after hash validation AND amount verification.
+      responses:
+        '200':
+          description: IPN received (always 200 to prevent SSLCommerz retries)
+
+  /payments/bkash/ipn:
+    post:
+      tags: [Payments]
+      summary: bKash IPN callback (webhook — no auth)
+      description: |
+        Secondary confirmation mechanism. Always queries bKash API to verify
+        before acting. Idempotency check prevents double-activation.
+      responses:
+        '200':
+          description: IPN processed
+
+  /subscriptions/plans:
+    get:
+      tags: [Payments]
+      summary: Get available subscription plans (public)
+      responses:
+        '200':
+          description: All plan configurations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tier: { $ref: '#/components/schemas/SubscriptionTier' }
+                        display_name: { type: string }
+                        monthly_price_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                        listing_limit: { type: integer }
+                        staff_seat_limit: { type: integer }
+                        features: { type: object, additionalProperties: true }
+
+  /subscriptions/me:
+    get:
+      tags: [Payments]
+      summary: Get current subscription (Owner only)
+      security:
+        - DealerBearer: []
+      responses:
+        '200':
+          description: Current subscription details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { $ref: '#/components/schemas/Subscription' }
+
+    put:
+      tags: [Payments]
+      summary: Change subscription plan (Owner only)
+      description: |
+        Upgrade: prorated charge applied immediately.
+        Downgrade: scheduled for next billing date.
+        Downgrade blocked if current usage exceeds new plan limits.
+      security:
+        - DealerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tier]
+              properties:
+                tier: { $ref: '#/components/schemas/SubscriptionTier' }
+      responses:
+        '200':
+          description: Plan change processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      action: { type: string, enum: [upgraded_immediately, downgrade_scheduled] }
+                      effective_date: { type: string, format: date }
+                      proration_charge: { $ref: '#/components/schemas/BdtAmount', nullable: true }
+
+  /payments/invoices:
+    get:
+      tags: [Payments]
+      summary: Get invoice history (Owner only)
+      security:
+        - DealerBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Invoice history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Invoice' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  # ══════════════════════════════════════════════════════════════
+  # FEEDS (GMC + FACEBOOK CATALOG)
+  # ══════════════════════════════════════════════════════════════
+
+  /feeds/gmc/{dealershipId}:
+    get:
+      tags: [Feeds]
+      summary: Google Merchant Center feed (RSS 2.0 XML)
+      description: |
+        Secured via `key` query parameter (feed key stored in dealer_website).
+        Called by Google on a 6-hour schedule plus on-demand via BullMQ.
+      parameters:
+        - name: dealershipId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: key
+          in: query
+          required: true
+          schema: { type: string }
+          description: Feed key from dealer_website.gmc_feed_key
+      responses:
+        '200':
+          description: RSS 2.0 XML feed with all active vehicle listings
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+        '401':
+          description: Invalid feed key
+
+  # ══════════════════════════════════════════════════════════════
+  # ADMIN (IP-RESTRICTED + ADMIN JWT)
+  # ══════════════════════════════════════════════════════════════
+
+  /admin/dealers:
+    get:
+      tags: [Admin]
+      summary: List all dealers with filters (Operations Manager+)
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending_approval, active, suspended, terminated]
+        - name: plan_tier
+          in: query
+          schema: { $ref: '#/components/schemas/SubscriptionTier' }
+        - name: district
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          description: Search by name, phone, or slug
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [joined_at, mrr_bdt, listing_count, last_active_at]
+            default: joined_at
+        - $ref: '#/components/parameters/OrderParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated dealer list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminDealerSummary' }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /admin/dealers/{id}:
+    get:
+      tags: [Admin]
+      summary: Get full dealer profile (Operations Manager+)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Full dealer record with subscription, usage, flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/Dealership'
+                      - type: object
+                        properties:
+                          subscription: { $ref: '#/components/schemas/Subscription' }
+                          usage:
+                            type: object
+                            properties:
+                              active_listings: { type: integer }
+                              staff_count: { type: integer }
+                              leads_30d: { type: integer }
+                              deals_30d: { type: integer }
+                              mrr_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                          flags:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type: { type: string }
+                                added_by: { type: string }
+                                added_at: { type: string, format: date-time }
+                          admin_notes:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                note: { type: string }
+                                author: { type: string }
+                                created_at: { type: string, format: date-time }
+
+  /admin/dealers/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: Approve pending dealer (Operations Manager)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApproveDealerDto' }
+      responses:
+        '200':
+          description: Dealer approved; welcome SMS sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      dealer_id: { type: string, format: uuid }
+                      status: { type: string, enum: [active] }
+
+  /admin/dealers/{id}/suspend:
+    post:
+      tags: [Admin]
+      summary: Suspend dealer (Operations Manager)
+      description: DMS → read-only. Listings hidden. New leads blocked. Effects within 60 seconds.
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuspendDealerDto' }
+      responses:
+        '200':
+          description: Dealer suspended; effects applied within 60 seconds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      dealer_id: { type: string, format: uuid }
+                      status: { type: string, enum: [suspended] }
+                      listings_hidden: { type: integer }
+
+  /admin/dealers/{id}/reinstate:
+    post:
+      tags: [Admin]
+      summary: Reinstate suspended dealer (Operations Manager)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Dealer reinstated; all listings restored within 60 seconds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      dealer_id: { type: string, format: uuid }
+                      status: { type: string, enum: [active] }
+                      listings_restored: { type: integer }
+
+  /admin/dealers/{id}/terminate:
+    post:
+      tags: [Admin]
+      summary: Terminate dealer permanently (Super Admin only + fresh TOTP)
+      description: |
+        IRREVERSIBLE. Requires:
+        - Super Admin role JWT
+        - Fresh TOTP code in request body (not cached; max 1 use per 90 seconds)
+        Effects: all listings deleted, website returns 404, CNAME deregistered,
+        dealer data retained 7 years.
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, totp_code]
+              properties:
+                reason: { type: string }
+                totp_code:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+      responses:
+        '200':
+          description: Dealer terminated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      dealer_id: { type: string, format: uuid }
+                      status: { type: string, enum: [terminated] }
+        '403':
+          description: Requires Super Admin role or fresh TOTP
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /admin/dealers/{id}/impersonate:
+    post:
+      tags: [Admin]
+      summary: Impersonate dealer (Super Admin only)
+      description: |
+        Issues a short-lived RS256 token with is_impersonation=true.
+        All actions taken with this token are watermarked in audit logs.
+        Token TTL: 3,600 seconds. Every impersonation action logged in platform_audit_log.
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Impersonation token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      impersonation_token: { type: string }
+                      expires_in: { type: integer, example: 3600 }
+                      dealer_name: { type: string }
+
+  /admin/dealers/{id}/note:
+    post:
+      tags: [Admin]
+      summary: Add internal admin note to dealer (all admin roles)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                note: { type: string }
+      responses:
+        '201':
+          description: Note added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      note_id: { type: string, format: uuid }
+
+  /admin/moderation/listings:
+    get:
+      tags: [Admin]
+      summary: Get C2C moderation queue (Content Moderator+)
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending_moderation, under_review, flagged]
+            default: pending_moderation
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Moderation queue
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/MarketplaceListing'
+                        - type: object
+                          properties:
+                            auto_check_results:
+                              type: object
+                              properties:
+                                photos_ok: { type: boolean }
+                                price_ok: { type: boolean }
+                                specs_ok: { type: boolean }
+                                contact_ok: { type: boolean }
+                                no_duplicate: { type: boolean }
+                            seller_history:
+                              type: object
+                              properties:
+                                total_listings: { type: integer }
+                                rejection_count: { type: integer }
+                                active_flags: { type: integer }
+                  meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+  /admin/moderation/listings/{id}:
+    put:
+      tags: [Admin]
+      summary: Make moderation decision on C2C listing (Content Moderator+)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModerationDecisionDto' }
+      responses:
+        '200':
+          description: Moderation decision applied; seller notified via SMS
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      listing_id: { type: string, format: uuid }
+                      outcome: { type: string }
+                      resubmits_remaining: { type: integer, nullable: true }
+
+  /admin/payments/dashboard:
+    get:
+      tags: [Admin]
+      summary: Revenue dashboard (Finance Admin+)
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Platform revenue metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      mrr_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                      arr_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                      active_paying_dealers: { type: integer }
+                      new_mrr_this_month: { $ref: '#/components/schemas/BdtAmount' }
+                      churned_mrr_this_month: { $ref: '#/components/schemas/BdtAmount' }
+                      net_mrr_movement: { $ref: '#/components/schemas/BdtAmount' }
+                      plan_distribution:
+                        type: object
+                        additionalProperties: { type: integer }
+
+  /admin/payments/failed:
+    get:
+      tags: [Admin]
+      summary: Get failed payment queue (Finance Admin+)
+      security:
+        - AdminBearer: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Failed invoices awaiting recovery action
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Invoice'
+                        - type: object
+                          properties:
+                            dealer_name: { type: string }
+                            dealer_phone: { type: string }
+                            failure_reason: { type: string }
+                            attempt_count: { type: integer }
+                            days_overdue: { type: integer }
+
+  /admin/broadcast:
+    post:
+      tags: [Admin]
+      summary: Send broadcast message to dealers (Operations Manager+)
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BroadcastMessageDto' }
+      responses:
+        '201':
+          description: Broadcast queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      broadcast_id: { type: string, format: uuid }
+                      recipient_count: { type: integer }
+                      estimated_delivery: { type: string, format: date-time }
+
+  /admin/system/health:
+    get:
+      tags: [Admin]
+      summary: System health dashboard (System Admin+)
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Real-time system metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      api:
+                        type: object
+                        properties:
+                          requests_per_minute: { type: number }
+                          p50_response_ms: { type: number }
+                          p95_response_ms: { type: number }
+                          error_rate_pct: { type: number }
+                      queues:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            waiting: { type: integer }
+                            active: { type: integer }
+                            failed: { type: integer }
+                            dlq: { type: integer }
+                      sync:
+                        type: object
+                        properties:
+                          avg_sync_time_ms: { type: number }
+                          p95_sync_time_ms: { type: number }
+                          within_sla_pct: { type: number }
+                          failed_last_24h: { type: integer }
+                      redis:
+                        type: object
+                        properties:
+                          memory_used_mb: { type: number }
+                          hit_rate_pct: { type: number }
+                      database:
+                        type: object
+                        properties:
+                          connection_pool_used: { type: integer }
+                          connection_pool_max: { type: integer }
+                          slow_queries_last_hour: { type: integer }
+
+  /admin/feature-flags:
+    get:
+      tags: [Admin]
+      summary: List all feature flags (System Admin+)
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: All feature flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key: { type: string }
+                        description: { type: string }
+                        enabled_global: { type: boolean }
+                        enabled_for_plans:
+                          type: array
+                          items: { type: string }
+                          nullable: true
+                        enabled_for_dealers:
+                          type: array
+                          items: { type: string, format: uuid }
+                          nullable: true
+                        rollout_pct: { type: integer, nullable: true }
+                        updated_at: { type: string, format: date-time }
+
+  /admin/feature-flags/{key}:
+    put:
+      tags: [Admin]
+      summary: Toggle feature flag (System Admin+ for global; Operations Manager for dealer-level)
+      description: Changes take effect immediately without redeployment.
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled_global: { type: boolean }
+                enabled_for_plans:
+                  type: array
+                  items: { type: string }
+                  nullable: true
+                enabled_for_dealers:
+                  type: array
+                  items: { type: string, format: uuid }
+                  nullable: true
+                rollout_pct:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  nullable: true
+      responses:
+        '200':
+          description: Feature flag updated; effective immediately
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      key: { type: string }
+                      enabled_global: { type: boolean }
+                      affected_dealers_estimate: { type: integer }
+
+  /admin/analytics/overview:
+    get:
+      tags: [Admin]
+      summary: Platform KPIs for investor/executive view (Super Admin only)
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Platform KPIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data:
+                    type: object
+                    properties:
+                      total_dealers: { type: integer }
+                      active_paying_dealers: { type: integer }
+                      free_dealers: { type: integer }
+                      total_marketplace_listings: { type: integer }
+                      total_leads_all_time: { type: integer }
+                      total_deals_all_time: { type: integer }
+                      mrr_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                      arr_bdt: { $ref: '#/components/schemas/BdtAmount' }
+                      monthly_churn_rate_pct: { type: number }
+                      avg_activation_days: { type: number }
+                      marketplace_page_views_30d: { type: integer }
+                      enquiries_30d: { type: integer }
+
+  # ══════════════════════════════════════════════════════════════
+  # HEALTH
+  # ══════════════════════════════════════════════════════════════
+
+  /health:
+    get:
+      tags: [Health]
+      summary: API liveness check
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ok] }
+                  timestamp: { type: string, format: date-time }
+                  version: { type: string }
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness check (database + Redis connected)
+      responses:
+        '200':
+          description: All dependencies healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ok] }
+                  database: { type: string, enum: [ok, degraded] }
+                  redis: { type: string, enum: [ok, degraded] }
+                  meilisearch: { type: string, enum: [ok, degraded] }
+        '503':
+          description: One or more dependencies unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [degraded] }
+                  database: { type: string }
+                  redis: { type: string }
+                  meilisearch: { type: string }

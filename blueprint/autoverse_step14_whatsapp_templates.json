@@ -1,0 +1,1093 @@
+{
+  "_meta": {
+    "document": "AutoVerse WhatsApp Business API — Template Submission Payloads",
+    "version": "1.0",
+    "api_endpoint": "POST https://graph.facebook.com/v19.0/{waba_id}/message_templates",
+    "auth_header": "Authorization: Bearer {META_SYSTEM_USER_TOKEN}",
+    "content_type": "Content-Type: application/json",
+    "total_templates": 16,
+    "languages": ["en", "bn"],
+    "total_submissions": 32,
+    "notes": [
+      "Submit ALL templates before go-live. Meta approval: instant to 24h per template.",
+      "Category UTILITY: transactional messages (order updates, account info). No promotional language.",
+      "Category MARKETING: promotional messages (new arrivals, offers). Higher cost per conversation.",
+      "All UTILITY templates include footer: 'Reply STOP to unsubscribe'",
+      "Variables use {{N}} notation (1-indexed integers), NOT named variables like {{name}}.",
+      "example.body_text is REQUIRED for all templates with variables — Meta rejects without it.",
+      "IMAGE header requires an uploaded media handle. Use Meta's resumable upload API first.",
+      "Bangla templates use language code 'bn'. Same template name works for both languages.",
+      "Submit en version first; submit bn version as a separate POST with same name + language: 'bn'",
+      "Template name rules: lowercase letters, numbers, underscores only. Max 60 chars.",
+      "After approval: templates are referenced by name in send API calls.",
+      "WABA Tier 1 allows 1,000 business-initiated conversations/day. Apply for Tier 2 early."
+    ],
+    "priority_order": [
+      "lead_instant_reply — CRITICAL: Day 0 auto-reply. Submit first.",
+      "away_message_default — Submit day 1.",
+      "lead_day1_followup",
+      "lead_day3_testdrive",
+      "lead_day7_expires",
+      "post_sale_day3",
+      "post_sale_day30",
+      "test_drive_reminder_customer",
+      "inventory_alert_new",
+      "abandoned_lead_recovery",
+      "post_sale_day180",
+      "post_sale_day365",
+      "subscription_renewal_reminder",
+      "subscription_payment_success",
+      "subscription_payment_failed",
+      "subscription_grace_period_warning"
+    ]
+  },
+
+  "templates": [
+
+    {
+      "_template_id": "T01",
+      "_purpose": "Day 0 instant reply — sent within 60 seconds of new marketplace/website enquiry",
+      "_trigger": "lead.created (source: marketplace, dealer_website, facebook_lead_ad, whatsapp)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "assigned_salesperson.full_name",
+        "{{3}}": "dealership.business_name",
+        "{{4}}": "vehicle.year",
+        "{{5}}": "vehicle.make",
+        "{{6}}": "vehicle.model",
+        "{{7}}": "vehicle.asking_price (formatted: BDT 14,50,000)",
+        "{{8}}": "marketplace_listing.full_url"
+      },
+      "payload_en": {
+        "name": "lead_instant_reply",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "HEADER",
+            "format": "IMAGE",
+            "example": {
+              "header_handle": ["UPLOAD_VEHICLE_PHOTO_HANDLE_HERE"]
+            }
+          },
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}! I'm {{2}} from {{3}}.\n\nThank you for your interest in our {{4}} {{5}} {{6}} at {{7}}.\n\nHere's the full listing with photos:\n{{8}}\n\nShall I arrange a viewing for you? What's a convenient time?",
+            "example": {
+              "body_text": [
+                ["Rafiq", "Salman", "Dhaka Auto House", "2019", "Toyota", "Axio", "BDT 14,50,000", "https://autoverse.com.bd/cars/2019-toyota-axio-dhaka-xk7p2"]
+              ]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          },
+          {
+            "type": "BUTTONS",
+            "buttons": [
+              {
+                "type": "QUICK_REPLY",
+                "text": "I'm interested"
+              },
+              {
+                "type": "QUICK_REPLY",
+                "text": "Not right now"
+              }
+            ]
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "lead_instant_reply",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "HEADER",
+            "format": "IMAGE",
+            "example": {
+              "header_handle": ["UPLOAD_VEHICLE_PHOTO_HANDLE_HERE"]
+            }
+          },
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}! আমি {{2}}, {{3}} থেকে বলছি।\n\nআমাদের {{4}} সালের {{5}} {{6}} সম্পর্কে আপনার আগ্রহের জন্য ধন্যবাদ। মূল্য: {{7}}।\n\nগাড়িটির সম্পূর্ণ বিবরণ ও ছবি দেখুন:\n{{8}}\n\nআপনি কি দেখতে আসতে চান? কখন সুবিধাজনক হবে?",
+            "example": {
+              "body_text": [
+                ["রফিক", "সালমান", "ঢাকা অটো হাউস", "২০১৯", "টয়োটা", "অ্যাক্সিও", "BDT ১৪,৫০,০০০", "https://autoverse.com.bd/cars/2019-toyota-axio-dhaka-xk7p2"]
+              ]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          },
+          {
+            "type": "BUTTONS",
+            "buttons": [
+              {
+                "type": "QUICK_REPLY",
+                "text": "আগ্রহী আছি"
+              },
+              {
+                "type": "QUICK_REPLY",
+                "text": "এখন না"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T02",
+      "_purpose": "Day 1 follow-up — sent 24 hours after Day 0 if no buyer reply received",
+      "_trigger": "automation sequence step 2 (condition: no_inbound_message_since_step_1)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model"
+      },
+      "payload_en": {
+        "name": "lead_day1_followup",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, just following up — are you still interested in the {{2}} {{3}}? It's still available.\n\nAny questions I can help with?",
+            "example": {
+              "body_text": [["Rafiq", "Toyota", "Axio"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "lead_day1_followup",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, {{2}} {{3}} সম্পর্কে আপনার কি এখনও আগ্রহ আছে? গাড়িটি এখনও পাওয়া যাচ্ছে।\n\nকোনো প্রশ্ন থাকলে জানাবেন।",
+            "example": {
+              "body_text": [["রফিক", "টয়োটা", "অ্যাক্সিও"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T03",
+      "_purpose": "Day 3 follow-up — test drive offer, sent 72 hours after Day 0 if no reply",
+      "_trigger": "automation sequence step 3 (condition: no_inbound_message_since_step_1)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model"
+      },
+      "payload_en": {
+        "name": "lead_day3_testdrive",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, I'd love to show you the {{2}} {{3}} in person — there's no better way to know if it's the right car for you.\n\nWe can arrange a test drive this week. What day works for you?",
+            "example": {
+              "body_text": [["Rafiq", "Toyota", "Axio"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          },
+          {
+            "type": "BUTTONS",
+            "buttons": [
+              {
+                "type": "QUICK_REPLY",
+                "text": "Book test drive"
+              }
+            ]
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "lead_day3_testdrive",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, {{2}} {{3}} গাড়িটি সরাসরি দেখলে ভালো বোঝা যাবে।\n\nএই সপ্তাহে টেস্ট ড্রাইভ নিন। কোনদিন সুবিধাজনক হবে আপনার?",
+            "example": {
+              "body_text": [["রফিক", "টয়োটা", "অ্যাক্সিও"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          },
+          {
+            "type": "BUTTONS",
+            "buttons": [
+              {
+                "type": "QUICK_REPLY",
+                "text": "টেস্ট ড্রাইভ বুক করুন"
+              }
+            ]
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T04",
+      "_purpose": "Day 7 urgency message — sent 168 hours after Day 0 if no reply AND lead is not cold",
+      "_trigger": "automation sequence step 4 (condition: no_inbound_message_since_step_1 AND lead_priority != cold)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model"
+      },
+      "_approval_note": "Do NOT mention 'another buyer' if it's not true. Meta flags misleading urgency. Phrase as 'high demand' instead.",
+      "payload_en": {
+        "name": "lead_day7_expires",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, just a heads-up — the {{2}} {{3}} has been getting a lot of interest this week.\n\nIf you'd like to secure it, let me know today and I'll reserve it for you.",
+            "example": {
+              "body_text": [["Rafiq", "Toyota", "Axio"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "lead_day7_expires",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, {{2}} {{3}} গাড়িটিতে এই সপ্তাহে অনেক আগ্রহ দেখা যাচ্ছে।\n\nআজই জানান — আপনার জন্য রিজার্ভ করে রাখব।",
+            "example": {
+              "body_text": [["রফিক", "টয়োটা", "অ্যাক্সিও"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T05",
+      "_purpose": "Abandoned lead recovery — sent when lead has had no stage change or interaction for 7 days",
+      "_trigger": "lead.stale_7d event (BullMQ abandoned_lead_recovery job)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model",
+        "{{4}}": "Optional price note — set to empty string '' if no price change, or 'We've also reduced the price to BDT X.' if price was reduced since original enquiry"
+      },
+      "payload_en": {
+        "name": "abandoned_lead_recovery",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, following up on the {{2}} {{3}} you enquired about. It's still available.{{4}}\n\nStill looking? I'm happy to answer any questions.",
+            "example": {
+              "body_text": [["Rafiq", "Toyota", "Axio", " We've also reduced the price to BDT 13,80,000."]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "abandoned_lead_recovery",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, {{2}} {{3}} সম্পর্কে আপনার সাথে যোগাযোগ করছি। গাড়িটি এখনও পাওয়া যাচ্ছে।{{4}}\n\nএখনও খুঁজছেন? যেকোনো প্রশ্নের উত্তর দিতে আমি প্রস্তুত।",
+            "example": {
+              "body_text": [["রফিক", "টয়োটা", "অ্যাক্সিও", " দামও কমানো হয়েছে — BDT ১৩,৮০,০০০।"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T06",
+      "_purpose": "Post-sale Day 3 — satisfaction check, 3 days after deal delivered",
+      "_trigger": "deal.delivered event → BullMQ post_sale_sequence, Step 1 (delay: 72h)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "customer.full_name (first name preferred)",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model"
+      },
+      "payload_en": {
+        "name": "post_sale_day3",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}! How are you enjoying your new {{2}} {{3}}? 😊\n\nAny questions about the car, feel free to ask — I'm here to help.",
+            "example": {
+              "body_text": [["Nafis", "Toyota", "Axio"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "post_sale_day3",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}! আপনার নতুন {{2}} {{3}} কেমন লাগছে? 😊\n\nগাড়ি সম্পর্কে যেকোনো প্রশ্ন থাকলে জানাবেন।",
+            "example": {
+              "body_text": [["নাফিস", "টয়োটা", "অ্যাক্সিও"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T07",
+      "_purpose": "Post-sale Day 30 — first service reminder",
+      "_trigger": "post_sale_sequence Step 2 (delay: 30 days after delivered_at)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "customer.full_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "service booking URL or dealership phone"
+      },
+      "payload_en": {
+        "name": "post_sale_day30",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, your first service is coming up soon for your {{2}}.\n\nRegular servicing keeps your car in top condition. Book your appointment here: {{3}}",
+            "example": {
+              "body_text": [["Nafis", "Toyota Axio", "https://autoverse.com.bd/service"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "post_sale_day30",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, আপনার {{2}}-এর প্রথম সার্ভিসের সময় হয়ে আসছে।\n\nনিয়মিত সার্ভিস করলে গাড়ি ভালো থাকে। এখানে বুক করুন: {{3}}",
+            "example": {
+              "body_text": [["নাফিস", "টয়োটা অ্যাক্সিও", "https://autoverse.com.bd/service"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T08",
+      "_purpose": "Post-sale Day 180 — six-month check-in",
+      "_trigger": "post_sale_sequence Step 3 (delay: 180 days after delivered_at)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "customer.full_name",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model"
+      },
+      "payload_en": {
+        "name": "post_sale_day180",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, hope your {{2}} {{3}} is running great at 6 months! 🚗\n\nLet us know if you need anything — we're always here to help.",
+            "example": {
+              "body_text": [["Nafis", "Toyota", "Axio"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "post_sale_day180",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, ৬ মাসে আপনার {{2}} {{3}} কেমন চলছে? 🚗\n\nকোনো প্রয়োজন হলে জানাবেন — আমরা সবসময় সাহায্য করতে আছি।",
+            "example": {
+              "body_text": [["নাফিস", "টয়োটা", "অ্যাক্সিও"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T09",
+      "_purpose": "Post-sale Day 365 — annual service reminder + upgrade offer with personalized inventory link",
+      "_trigger": "post_sale_sequence Step 4 (delay: 365 days after delivered_at)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "customer.full_name",
+        "{{2}}": "vehicle.make (purchased vehicle)",
+        "{{3}}": "personalized inventory link (dealer.autoverse.com.bd/for/{lead_token})"
+      },
+      "payload_en": {
+        "name": "post_sale_day365",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}, it's been a year with your {{2}} — time flies! 🎉\n\nIt's time for your annual service. And if you're thinking about an upgrade, we have some great new arrivals that might interest you:\n{{3}}",
+            "example": {
+              "body_text": [["Nafis", "Toyota Axio", "https://dhaka-auto.autoverse.com.bd/for/abc123"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "post_sale_day365",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}, আপনার {{2}} নেওয়ার এক বছর হয়ে গেছে! 🎉\n\nবার্ষিক সার্ভিসের সময় হয়েছে। আর নতুন গাড়ি দেখতে চাইলে এখানে আপনার পছন্দের কিছু আছে:\n{{3}}",
+            "example": {
+              "body_text": [["নাফিস", "টয়োটা অ্যাক্সিও", "https://dhaka-auto.autoverse.com.bd/for/abc123"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T10",
+      "_purpose": "New inventory alert — sent to opted-in customers when a matching vehicle becomes available",
+      "_trigger": "vehicle.available event → inventory_alert job (if customer.opted_in_inventory_alerts = true AND vehicle matches preferences)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "vehicle.year",
+        "{{2}}": "vehicle.make",
+        "{{3}}": "vehicle.model",
+        "{{4}}": "vehicle.asking_price (formatted)",
+        "{{5}}": "vehicle.photo_count",
+        "{{6}}": "marketplace_listing.full_url"
+      },
+      "payload_en": {
+        "name": "inventory_alert_new",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "HEADER",
+            "format": "IMAGE",
+            "example": {
+              "header_handle": ["UPLOAD_VEHICLE_PHOTO_HANDLE_HERE"]
+            }
+          },
+          {
+            "type": "BODY",
+            "text": "New arrival matching your interest: {{1}} {{2}} {{3}} — {{4}}.\n\n{{5}} photos available. View here:\n{{6}}",
+            "example": {
+              "body_text": [["2020", "Toyota", "Aqua", "BDT 17,20,000", "12", "https://autoverse.com.bd/cars/2020-toyota-aqua-dhaka-mn4r9"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to stop receiving these alerts"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "inventory_alert_new",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "HEADER",
+            "format": "IMAGE",
+            "example": {
+              "header_handle": ["UPLOAD_VEHICLE_PHOTO_HANDLE_HERE"]
+            }
+          },
+          {
+            "type": "BODY",
+            "text": "আপনার পছন্দের নতুন গাড়ি এসেছে: {{1}} {{2}} {{3}} — {{4}}।\n\n{{5}}টি ছবি পাওয়া যাচ্ছে। এখানে দেখুন:\n{{6}}",
+            "example": {
+              "body_text": [["২০২০", "টয়োটা", "অ্যাকুয়া", "BDT ১৭,২০,০০০", "১২", "https://autoverse.com.bd/cars/2020-toyota-aqua-dhaka-mn4r9"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "এই অ্যালার্ট বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T11",
+      "_purpose": "Away message — sent when messages arrive outside configured business hours (max 1 per contact per 6h)",
+      "_trigger": "message.received.outside_hours event",
+      "_tier": "Basic (all plans — WhatsApp Business app)",
+      "_variable_map": {
+        "{{1}}": "dealership.business_hours_formatted (e.g. 'Mon–Fri 9AM–6PM, Sat 9AM–5PM')",
+        "{{2}}": "dealership.phone or dealership.whatsapp_number"
+      },
+      "payload_en": {
+        "name": "away_message_default",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi! Thanks for reaching out. We're currently closed.\n\nOur business hours are: {{1}}.\n\nWe'll respond first thing when we open. For urgent enquiries, call: {{2}}",
+            "example": {
+              "body_text": [["Mon–Fri 9AM–6PM, Sat 9AM–5PM", "+8801711234567"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "away_message_default",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো! আমাদের সাথে যোগাযোগ করার জন্য ধন্যবাদ। আমরা এখন বন্ধ আছি।\n\nআমাদের সময়: {{1}}।\n\nখোলার পরপরই আপনাকে জানাব। জরুরি বিষয়ে কল করুন: {{2}}",
+            "example": {
+              "body_text": [["সোম–শুক্র সকাল ৯টা–সন্ধ্যা ৬টা, শনি সকাল ৯টা–বিকেল ৫টা", "+৮৮০১৭১১২৩৪৫৬৭"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T12",
+      "_purpose": "Test drive reminder — sent to customer 24 hours before scheduled test drive",
+      "_trigger": "BullMQ lead-follow-up job (24h before test_drive_scheduled_at)",
+      "_tier": "Advanced (Professional+ plan with WABA)",
+      "_variable_map": {
+        "{{1}}": "lead.buyer_name",
+        "{{2}}": "vehicle.year",
+        "{{3}}": "vehicle.make",
+        "{{4}}": "vehicle.model",
+        "{{5}}": "test_drive_date_formatted (e.g. 'tomorrow, Saturday 15 January')",
+        "{{6}}": "test_drive_time (e.g. '3:00 PM')",
+        "{{7}}": "dealership.address",
+        "{{8}}": "Google Maps URL for dealership"
+      },
+      "payload_en": {
+        "name": "test_drive_reminder_customer",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}! Reminder: your test drive for the {{2}} {{3}} {{4}} is confirmed for {{5}} at {{6}}.\n\nWe're located at: {{7}}\n\nDirections: {{8}}\n\nSee you then!",
+            "example": {
+              "body_text": [["Rafiq", "2019", "Toyota", "Axio", "tomorrow, Saturday 15 January", "3:00 PM", "House 12, Road 5, Dholaikhal, Dhaka", "https://maps.google.com/?q=23.7104,90.4074"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          },
+          {
+            "type": "BUTTONS",
+            "buttons": [
+              {
+                "type": "URL",
+                "text": "Get Directions",
+                "url": "https://maps.google.com/?q={{1}}"
+              }
+            ]
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "test_drive_reminder_customer",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}! মনে করিয়ে দিচ্ছি: {{2}} {{3}} {{4}}-এর টেস্ট ড্রাইভ নিশ্চিত হয়েছে — {{5}}, {{6}}।\n\nআমাদের ঠিকানা: {{7}}\n\nদিকনির্দেশনা: {{8}}\n\nআপনার জন্য অপেক্ষায় আছি!",
+            "example": {
+              "body_text": [["রফিক", "২০১৯", "টয়োটা", "অ্যাক্সিও", "আগামীকাল, শনিবার ১৫ জানুয়ারি", "বিকেল ৩টা", "বাড়ি ১২, রাস্তা ৫, ধোলাইখাল, ঢাকা", "https://maps.google.com/?q=23.7104,90.4074"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T13",
+      "_purpose": "Subscription renewal reminder — sent 7, 3, and 0 days before subscription expiry",
+      "_trigger": "subscription_expiry BullMQ job at Day -7, -3, 0",
+      "_tier": "Platform system message (sent to dealer owners)",
+      "_variable_map": {
+        "{{1}}": "dealership.business_name",
+        "{{2}}": "days_until_expiry (7, 3, or 'today')",
+        "{{3}}": "subscription.tier (Starter / Professional / Business)",
+        "{{4}}": "subscription.monthly_price_bdt (formatted)",
+        "{{5}}": "renewal URL or bKash shortcode"
+      },
+      "payload_en": {
+        "name": "subscription_renewal_reminder",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "Hi {{1}}! Your AutoVerse {{3}} plan renews in {{2}} days ({{4}}).\n\nEnsure your bKash/Nagad balance is sufficient to avoid service interruption.\n\nRenew early: {{5}}",
+            "example": {
+              "body_text": [["Dhaka Auto House", "7", "Starter", "BDT 2,999", "app.autoverse.com.bd/settings/subscription"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "subscription_renewal_reminder",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "হ্যালো {{1}}! আপনার AutoVerse {{3}} প্ল্যান {{2}} দিন পরে নবায়ন হবে ({{4}})।\n\nসার্ভিস বাধাগ্রস্ত না হতে bKash/Nagad ব্যালেন্স প্রস্তুত রাখুন।\n\nআগেই নবায়ন করুন: {{5}}",
+            "example": {
+              "body_text": [["ঢাকা অটো হাউস", "৭", "স্টার্টার", "BDT ২,৯৯৯", "app.autoverse.com.bd/settings/subscription"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T14",
+      "_purpose": "Payment success confirmation — sent immediately after successful subscription payment",
+      "_trigger": "payments.subscription.payment_success event",
+      "_tier": "Platform system message (sent to dealer owners)",
+      "_variable_map": {
+        "{{1}}": "dealership.business_name",
+        "{{2}}": "payment_transaction.amount_bdt (formatted)",
+        "{{3}}": "subscription.tier",
+        "{{4}}": "subscription.expires_at (formatted date)",
+        "{{5}}": "payment_transaction.gateway_transaction_id (bKash/Nagad trxID)"
+      },
+      "payload_en": {
+        "name": "subscription_payment_success",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "✅ Payment confirmed, {{1}}!\n\nAmount: {{2}}\nPlan: AutoVerse {{3}}\nActive until: {{4}}\n\nTransaction ID: {{5}}\n\nThank you for your continued trust in AutoVerse.",
+            "example": {
+              "body_text": [["Dhaka Auto House", "BDT 2,999", "Starter", "15 February 2025", "AAH71XXXXX"]]
+            }
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "subscription_payment_success",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "✅ পেমেন্ট নিশ্চিত হয়েছে, {{1}}!\n\nপরিমাণ: {{2}}\nপ্ল্যান: AutoVerse {{3}}\nসক্রিয় থাকবে: {{4}} পর্যন্ত\n\nলেনদেন আইডি: {{5}}\n\nAutoVerse-এ আপনার আস্থার জন্য ধন্যবাদ।",
+            "example": {
+              "body_text": [["ঢাকা অটো হাউস", "BDT ২,৯৯৯", "স্টার্টার", "১৫ ফেব্রুয়ারি ২০২৫", "AAH71XXXXX"]]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T15",
+      "_purpose": "Payment failed notification — sent after all retry attempts fail, grace period begins",
+      "_trigger": "subscription billing DLQ after 3 failed attempts",
+      "_tier": "Platform system message (sent to dealer owners)",
+      "_variable_map": {
+        "{{1}}": "dealership.business_name",
+        "{{2}}": "subscription.tier",
+        "{{3}}": "invoice.total_bdt (formatted)",
+        "{{4}}": "grace_period_end_date (formatted)",
+        "{{5}}": "payment update URL"
+      },
+      "payload_en": {
+        "name": "subscription_payment_failed",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "⚠️ Payment failed for your AutoVerse {{2}} plan, {{1}}.\n\nAmount due: {{3}}\nYour account remains fully active during the grace period, ending {{4}}.\n\nTo avoid service interruption, update your payment method or pay manually:\n{{5}}",
+            "example": {
+              "body_text": [["Dhaka Auto House", "Starter", "BDT 2,999", "22 January 2025", "app.autoverse.com.bd/settings/billing"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "subscription_payment_failed",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "⚠️ আপনার AutoVerse {{2}} প্ল্যানের পেমেন্ট হয়নি, {{1}}।\n\nপরিশোধযোগ্য: {{3}}\nগ্রেস পিরিয়ডে ({{4}} পর্যন্ত) আপনার অ্যাকাউন্ট সচল থাকবে।\n\nসার্ভিস বাধাগ্রস্ত না করতে পেমেন্ট করুন:\n{{5}}",
+            "example": {
+              "body_text": [["ঢাকা অটো হাউস", "স্টার্টার", "BDT ২,৯৯৯", "২২ জানুয়ারি ২০২৫", "app.autoverse.com.bd/settings/billing"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    },
+
+    {
+      "_template_id": "T16",
+      "_purpose": "Grace period ending warning — sent at Day +14 when grace period is about to end and suspension is imminent",
+      "_trigger": "subscription_expiry BullMQ job at Day +14 (grace period final warning)",
+      "_tier": "Platform system message (sent to dealer owners)",
+      "_variable_map": {
+        "{{1}}": "dealership.business_name",
+        "{{2}}": "suspension_date (formatted, typically 2 days away)",
+        "{{3}}": "subscription.tier",
+        "{{4}}": "invoice.total_bdt (formatted)",
+        "{{5}}": "renewal URL"
+      },
+      "payload_en": {
+        "name": "subscription_grace_ending",
+        "language": "en",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "🚨 Final warning, {{1}}.\n\nYour AutoVerse {{3}} subscription will be suspended on {{2}} if payment of {{4}} is not received.\n\nAfter suspension: your listings will be hidden and you will not receive new leads.\n\nPay now to stay active: {{5}}",
+            "example": {
+              "body_text": [["Dhaka Auto House", "25 January 2025", "Starter", "BDT 2,999", "app.autoverse.com.bd/settings/billing"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "Reply STOP to unsubscribe from messages"
+          }
+        ]
+      },
+      "payload_bn": {
+        "name": "subscription_grace_ending",
+        "language": "bn",
+        "category": "UTILITY",
+        "components": [
+          {
+            "type": "BODY",
+            "text": "🚨 সর্বশেষ সতর্কতা, {{1}}।\n\n{{4}} পরিশোধ না হলে {{2}} তারিখে আপনার AutoVerse {{3}} সাবস্ক্রিপশন স্থগিত হবে।\n\nস্থগিত হলে: আপনার সব লিস্টিং লুকিয়ে যাবে এবং নতুন লিড পাবেন না।\n\nএখনই পেমেন্ট করুন: {{5}}",
+            "example": {
+              "body_text": [["ঢাকা অটো হাউস", "২৫ জানুয়ারি ২০২৫", "স্টার্টার", "BDT ২,৯৯৯", "app.autoverse.com.bd/settings/billing"]]
+            }
+          },
+          {
+            "type": "FOOTER",
+            "text": "বার্তা বন্ধ করতে STOP লিখে পাঠান"
+          }
+        ]
+      }
+    }
+
+  ],
+
+  "submission_guide": {
+    "step1_upload_media": {
+      "title": "Step 1: Upload Vehicle Photo Sample for IMAGE Headers",
+      "description": "Templates T01 and T10 use IMAGE headers. Before submitting, upload a sample vehicle photo to Meta and get a media handle.",
+      "api_call": "POST https://graph.facebook.com/v19.0/{waba_id}/uploads",
+      "headers": {
+        "Authorization": "Bearer {META_SYSTEM_USER_TOKEN}",
+        "Content-Type": "image/jpeg"
+      },
+      "notes": [
+        "Use a clean, professional vehicle photo — this is shown to Meta reviewers",
+        "The handle from this upload is used in example.header_handle",
+        "The actual message sends the vehicle's real photo — not this sample",
+        "Minimum image size: 800×418px (1.91:1 ratio for landscape)"
+      ]
+    },
+    "step2_submit_en_templates": {
+      "title": "Step 2: Submit all 16 English templates",
+      "api_call": "POST https://graph.facebook.com/v19.0/{waba_id}/message_templates",
+      "headers": {
+        "Authorization": "Bearer {META_SYSTEM_USER_TOKEN}",
+        "Content-Type": "application/json"
+      },
+      "body": "Use each payload_en object from templates array above",
+      "order": "Submit in the priority_order listed in _meta section",
+      "notes": [
+        "Submit one at a time. Do not batch.",
+        "Check status after each: GET https://graph.facebook.com/v19.0/{waba_id}/message_templates?name={template_name}",
+        "Status values: PENDING, APPROVED, REJECTED, PAUSED, DISABLED",
+        "Approval time: typically instant to 24 hours",
+        "If REJECTED: check rejection_reason field and fix before resubmitting"
+      ]
+    },
+    "step3_submit_bn_templates": {
+      "title": "Step 3: Submit all 16 Bangla templates",
+      "notes": [
+        "Same template names as English — language field differentiates them",
+        "Meta treats each language as a separate template variant",
+        "Submit all Bangla versions after English approvals",
+        "Bangla templates may take longer to review (less common language)"
+      ]
+    },
+    "step4_verify_all_approved": {
+      "title": "Step 4: Verify all templates approved before go-live",
+      "query": "GET https://graph.facebook.com/v19.0/{waba_id}/message_templates?fields=name,language,status,rejection_reason&limit=100",
+      "expected_count": 32,
+      "go_live_condition": "All 32 templates (16 en + 16 bn) must have status = APPROVED"
+    }
+  },
+
+  "common_rejection_reasons_and_fixes": {
+    "PROMOTIONAL_CONTENT_IN_UTILITY_TEMPLATE": {
+      "symptom": "Template rejected for containing promotional language",
+      "examples_of_problematic_phrases": [
+        "Best price guaranteed",
+        "Limited time offer",
+        "Don't miss out",
+        "Exclusive deal"
+      ],
+      "fix": "Remove promotional language. Utility templates must be transactional only."
+    },
+    "VARIABLE_FORMAT_INVALID": {
+      "symptom": "Rejected for variable format",
+      "fix": "Variables must be {{1}}, {{2}} etc. Named variables like {{name}} are NOT supported."
+    },
+    "MISSING_EXAMPLE": {
+      "symptom": "Rejected for missing example values",
+      "fix": "Every {{N}} variable needs a corresponding example in example.body_text array."
+    },
+    "FOOTER_REQUIRED": {
+      "symptom": "Rejected — opt-out missing",
+      "fix": "All templates must include footer: 'Reply STOP to unsubscribe from messages'"
+    },
+    "BUTTON_TEXT_TOO_LONG": {
+      "symptom": "Button text rejected",
+      "fix": "Quick reply button text: max 25 characters. URL button text: max 25 characters."
+    },
+    "INVALID_LANGUAGE_CODE": {
+      "symptom": "Language rejected",
+      "fix": "Use 'bn' not 'bn_BD'. Meta uses 'bn' for Bengali."
+    },
+    "IMAGE_HANDLE_EXPIRED": {
+      "symptom": "IMAGE header handle expired",
+      "fix": "Media handles expire after 30 days. Re-upload sample image and resubmit."
+    }
+  },
+
+  "sending_api_reference": {
+    "description": "How to send an approved template via the Graph API",
+    "endpoint": "POST https://graph.facebook.com/v19.0/{WHATSAPP_PHONE_NUMBER_ID}/messages",
+    "headers": {
+      "Authorization": "Bearer {WHATSAPP_API_TOKEN}",
+      "Content-Type": "application/json"
+    },
+    "example_lead_instant_reply": {
+      "messaging_product": "whatsapp",
+      "to": "8801711234567",
+      "type": "template",
+      "template": {
+        "name": "lead_instant_reply",
+        "language": {
+          "code": "en"
+        },
+        "components": [
+          {
+            "type": "header",
+            "parameters": [
+              {
+                "type": "image",
+                "image": {
+                  "link": "https://media.autoverse.com.bd/vehicles/dealer_id/vehicle_id/abc.webp"
+                }
+              }
+            ]
+          },
+          {
+            "type": "body",
+            "parameters": [
+              { "type": "text", "text": "Rafiq" },
+              { "type": "text", "text": "Salman" },
+              { "type": "text", "text": "Dhaka Auto House" },
+              { "type": "text", "text": "2019" },
+              { "type": "text", "text": "Toyota" },
+              { "type": "text", "text": "Axio" },
+              { "type": "text", "text": "BDT 14,50,000" },
+              { "type": "text", "text": "https://autoverse.com.bd/cars/2019-toyota-axio-dhaka-xk7p2" }
+            ]
+          }
+        ]
+      }
+    },
+    "example_away_message": {
+      "messaging_product": "whatsapp",
+      "to": "8801711234567",
+      "type": "template",
+      "template": {
+        "name": "away_message_default",
+        "language": {
+          "code": "bn"
+        },
+        "components": [
+          {
+            "type": "body",
+            "parameters": [
+              { "type": "text", "text": "সোম–শুক্র সকাল ৯টা–সন্ধ্যা ৬টা, শনি সকাল ৯টা–বিকেল ৫টা" },
+              { "type": "text", "text": "+৮৮০১৭১১২৩৪৫৬৭" }
+            ]
+          }
+        ]
+      }
+    },
+    "error_handling": {
+      "190": "Token expired — refresh system user token immediately",
+      "131030": "Template not approved yet — check status before sending",
+      "131047": "Re-engagement window expired (>24h since last user message) — can only send templates",
+      "131056": "Business-initiated conversation limit reached — daily tier limit hit",
+      "100": "Invalid parameter — check variable count matches template definition"
+    }
+  },
+
+  "waba_tier_upgrade_guide": {
+    "current_tier": "Tier 1 (default for new WABA accounts)",
+    "tier_1_limit": "1,000 business-initiated conversations per day",
+    "tier_2_limit": "10,000 per day",
+    "tier_3_limit": "100,000 per day",
+    "how_to_upgrade": "Tiers are earned automatically — NOT purchased",
+    "tier_2_requirement": "Send 1,000+ business-initiated conversations in a rolling 30-day period WITH quality rating MEDIUM or HIGH",
+    "quality_rating_factors": [
+      "Low block/report rate (<2%)",
+      "High message read rate",
+      "No policy violations",
+      "Opt-out footer in all templates"
+    ],
+    "monitoring": "Check tier and quality: GET https://graph.facebook.com/v19.0/{waba_id}?fields=message_template_namespace,quality_score",
+    "recommendation": "Start sending Day 0 auto-replies immediately after WABA activation. This builds conversation volume for tier upgrade. Target Tier 2 by Month 3."
+  }
+}

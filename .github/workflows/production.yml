@@ -1,0 +1,110 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # GATE 0: Manual approval required for production
+  # ─────────────────────────────────────────────────────────────────
+  production-approval:
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval   # GitHub Environment with required reviewers
+      # In GitHub: Settings → Environments → production-approval
+      # Required reviewers: [CEO, CTO] — must manually approve
+    steps:
+      - name: Approval gate
+        run: echo "Production deploy approved"
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: production-approval
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: https://garisale.com
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+
+      # GATE 1: Verify staging was deployed and tests passed
+      - name: Verify staging smoke tests passed recently
+        run: node scripts/verify-staging-health.js
+
+      # GATE 2: Create database backup BEFORE migration
+      - name: Backup production database
+        run: |
+          pg_dump "${{ secrets.PRODUCTION_DATABASE_URL }}" \
+            --format=custom \
+            --file=garisale_pre_deploy_${{ github.sha }}.dump
+          # Upload backup to R2 for safe keeping
+          aws s3 cp garisale_pre_deploy_${{ github.sha }}.dump \
+            s3://${{ vars.R2_BACKUP_BUCKET }}/pre-deploy/ \
+            --endpoint-url https://${{ vars.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      # GATE 3: Run migrations (backwards-compatible only — see Section 6)
+      - name: Run database migrations (production)
+        run: |
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      # GATE 4: Deploy API and Workers to Railway (production)
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Deploy to Railway (production)
+        run: |
+          railway up --service "api" --detach
+          railway up --service "main-worker" --detach
+          railway up --service "automation-worker" --detach
+          railway up --service "notification-worker" --detach
+          railway up --service "analytics-worker" --detach
+          railway up --service "feed-worker" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
+
+      # GATE 6: Deploy frontends
+      - name: Deploy marketplace (Vercel production)
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy admin panel (Vercel production)
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/admin
+
+      # GATE 7: Post-deploy smoke tests
+      - name: Production smoke tests
+        run: npm run test:smoke -- --baseUrl=https://api.garisale.com
+        timeout-minutes: 5
+
+      # GATE 8: Monitor error rate for 5 minutes
+      - name: Monitor error rate post-deploy
+        run: node scripts/monitor-error-rate.js --duration=300 --threshold=0.01
+
+      - name: Notify Slack — Production Deploy Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Production deployed: ${{ github.sha }}. Monitor: https://garisale.com",
+              "channel": "#deploys"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      # ROLLBACK on any gate failure:
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed. Rolling back..."
+          # Vercel: automatic rollback via Vercel dashboard or CLI
+          vercel rollback --prod --token ${{ secrets.VERCEL_TOKEN }}

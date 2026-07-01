@@ -1,0 +1,184 @@
+name: CI — Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main, staging]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true  # cancel older runs on new push to same branch
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 1: Code Quality
+  # ─────────────────────────────────────────────────────────────────
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run type-check  # tsc --noEmit across all packages
+      - run: npm run lint        # ESLint + Prettier check
+      - run: npm run check:imports  # check no circular dependencies
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 2: Unit Tests
+  # ─────────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run unit tests with coverage
+        run: npm run test:unit -- --coverage --coverageReporters=json-summary
+      - name: Check coverage thresholds
+        run: |
+          # Fail if any coverage metric drops below thresholds
+          node scripts/check-coverage.js \
+            --lines=80 \
+            --functions=80 \
+            --branches=70 \
+            --statements=80
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 3: Integration Tests
+  # ─────────────────────────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: garisale_test
+          POSTGRES_USER: garisale
+          POSTGRES_PASSWORD: testpassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports: ["5432:5432"]
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+        ports: ["6379:6379"]
+      meilisearch:
+        image: getmeili/meilisearch:v1.6
+        env: { MEILI_MASTER_KEY: testkey }
+        ports: ["7700:7700"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run Prisma migrations on test DB
+        run: npm run db:migrate:test
+        env:
+          DATABASE_URL: postgresql://garisale:testpassword@localhost:5432/garisale_test
+      - name: Seed test data
+        run: npm run db:seed:test
+        env:
+          DATABASE_URL: postgresql://garisale:testpassword@localhost:5432/garisale_test
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://garisale:testpassword@localhost:5432/garisale_test
+          REDIS_URL: redis://localhost:6379
+          MEILISEARCH_HOST: http://localhost:7700
+          MEILISEARCH_MASTER_KEY: testkey
+          NODE_ENV: test
+          JWT_PRIVATE_KEY: ${{ secrets.TEST_JWT_PRIVATE_KEY }}
+          JWT_PUBLIC_KEY: ${{ secrets.TEST_JWT_PUBLIC_KEY }}
+          ADMIN_JWT_SECRET: test_admin_secret_32chars_minimum
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 4: Security Scan
+  # ─────────────────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm audit --audit-level=high  # fail on high/critical vulnerabilities
+      - uses: trufflesecurity/trufflehog-actions-scan@main
+        with: { base: ${{ github.event.pull_request.base.sha }} }
+        # Scans diff for accidentally committed secrets
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 5: Schema Migration Safety Check
+  # ─────────────────────────────────────────────────────────────────
+  migration-check:
+    name: Migration Safety Check
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.files, 'prisma/migrations')
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - name: Check migration is backwards-compatible
+        run: node scripts/check-migration-safety.js
+      - name: Require 2 reviewers for schema changes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner, repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            const approvals = reviews.data.filter(r => r.state === 'APPROVED').length;
+            if (approvals < 2) {
+              core.setFailed('Schema migrations require 2 reviewer approvals');
+            }
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 6: Preview Deployment (Staging + Vercel Preview)
+  # ─────────────────────────────────────────────────────────────────
+  preview-deploy:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [quality, unit-tests, integration-tests, security]
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+      - name: Deploy API to staging preview
+        run: |
+          railway up --service "api-staging" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+      - name: Get staging preview URL
+        id: staging-url
+        run: echo "url=https://staging.api.garisale.com" >> $GITHUB_OUTPUT
+      - name: Comment PR with preview URLs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Preview Deployment Ready
+              | Service | URL |
+              |---------|-----|
+              | API | ${{ steps.staging-url.outputs.url }} |`
+            })

@@ -1,0 +1,1214 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ENUMS
+enum UserRole {
+  admin_user
+  dealer_owner
+  manager
+  salesperson
+  technician
+  buyer
+  c2c_seller
+
+  @@map("user_role")
+}
+
+enum UserStatus {
+  active
+  suspended
+  pending_verification
+  deleted
+
+  @@map("user_status")
+}
+
+enum DealerStatus {
+  pending_approval
+  active
+  suspended
+  terminated
+
+  @@map("dealer_status")
+}
+
+enum SubscriptionTier {
+  free
+  starter
+  professional
+  business
+  enterprise
+
+  @@map("subscription_tier")
+}
+
+enum VehicleCondition {
+  new
+  used
+  reconditioned
+
+  @@map("vehicle_condition")
+}
+
+enum VehicleStatus {
+  acquired
+  in_recon
+  available
+  reserved
+  sold
+  scrapped
+
+  @@map("vehicle_status")
+}
+
+enum FuelType {
+  petrol
+  diesel
+  hybrid
+  electric
+  cng
+  lpg
+
+  @@map("fuel_type")
+}
+
+enum TransmissionType {
+  automatic
+  manual
+  cvt
+  dct
+  amt
+
+  @@map("transmission_type")
+}
+
+enum ReconItemStatus {
+  ok
+  needs_work
+  critical
+
+  @@map("recon_item_status")
+}
+
+enum ReconTaskStatus {
+  pending
+  in_progress
+  complete
+  cancelled
+
+  @@map("recon_task_status")
+}
+
+enum LeadStage {
+  new
+  contacted
+  qualified
+  test_drive
+  quote_sent
+  negotiation
+  closed
+  lost
+
+  @@map("lead_stage")
+}
+
+enum LeadPriority {
+  hot
+  warm
+  cold
+
+  @@map("lead_priority")
+}
+
+enum LeadSource {
+  walk_in
+  marketplace
+  dealer_website
+  facebook_lead_ad
+  whatsapp
+  phone
+  referral
+  sms_campaign
+  email_campaign
+  social_media
+  other
+
+  @@map("lead_source")
+}
+
+enum DealType {
+  cash
+  finance
+  lease
+  exchange
+  exchange_plus_cash
+
+  @@map("deal_type")
+}
+
+enum DealStatus {
+  draft
+  pending_approval
+  approved
+  delivered
+  cancelled
+
+  @@map("deal_status")
+}
+
+enum PaymentMethod {
+  bkash
+  nagad
+  rocket
+  bank_transfer
+  cash
+  sslcommerz
+  card
+  cheque
+
+  @@map("payment_method")
+}
+
+enum ListingType {
+  dealer
+  c2c
+
+  @@map("listing_type")
+}
+
+enum ListingStatus {
+  active
+  reserved
+  sold
+  hidden
+  archived
+  expired
+  under_review
+  rejected
+
+  @@map("listing_status")
+}
+
+enum DealRating {
+  great_deal
+  good_deal
+  fair_price
+  overpriced
+  unrated
+
+  @@map("deal_rating")
+}
+
+enum AutomationChannel {
+  whatsapp
+  facebook
+  instagram
+  email
+  sms
+  push
+
+  @@map("automation_channel")
+}
+
+enum RecurCycle {
+  weekly
+  monthly
+  quarterly
+  annual
+
+  @@map("recur_cycle")
+}
+
+enum LanguagePref {
+  en
+  bn
+
+  @@map("language_pref")
+}
+
+enum SellerType {
+  dealer
+  private
+
+  @@map("seller_type")
+}
+
+// MODELS
+
+model User {
+  id                   String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phone                String        @unique @db.VarChar(20)
+  email                String?       @unique @db.VarChar(255)
+  password_hash        String?       @db.VarChar(255)
+  full_name            String        @db.VarChar(255)
+  role                 UserRole
+  status               UserStatus    @default(pending_verification)
+  preferred_language   LanguagePref  @default(bn) @map("preferred_language")
+  avatar_url           String?       @map("avatar_url")
+  fcm_token            String?       @map("fcm_token")
+  fcm_token_updated_at DateTime?     @map("fcm_token_updated_at") @db.Timestamptz
+  last_login_at        DateTime?     @map("last_login_at") @db.Timestamptz
+  last_login_ip        String?       @map("last_login_ip") // stored as String/INET
+  login_count          Int           @default(0) @map("login_count")
+  failed_login_count   Int           @default(0) @map("failed_login_count")
+  locked_until         DateTime?     @map("locked_until") @db.Timestamptz
+  admin_role           String?       @map("admin_role") @db.VarChar(50)
+  totp_secret          String?       @map("totp_secret") @db.VarChar(255)
+  totp_enabled         Boolean       @default(false) @map("totp_enabled")
+  totp_failed_attempts Int           @default(0) @map("totp_failed_attempts")
+  created_at           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updated_at           DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at           DateTime?     @map("deleted_at") @db.Timestamptz
+
+  dealershipsOwned     Dealership[]  @relation("DealershipOwner")
+  dealershipsApproved  Dealership[]  @relation("DealerApprovedBy")
+  dealershipsSuspended Dealership[]  @relation("DealerSuspendedBy")
+  staffRecords         DealerStaff[] @relation("StaffUser")
+  invitedStaff         DealerStaff[] @relation("StaffInvitedBy")
+  deactivatedStaff     DealerStaff[] @relation("StaffDeactivatedBy")
+  refreshTokens        RefreshToken[]
+  defaultSettings      DealerSettings[] @relation("DefaultAssignedTo")
+  vehicleStatusChanges VehicleStatusHistory[]
+  reconAssessments     ReconAssessment[]
+  reconTasksAssigned   ReconTask[]   @relation("ReconTaskAssignedTo")
+  reconTasksCreated    ReconTask[]   @relation("ReconTaskCreatedBy")
+  customers            Customer[]
+  leadsAssigned        Lead[]        @relation("LeadAssignedTo")
+  leadInteractions     LeadInteraction[]
+  dealsSalesperson     Deal[]        @relation("DealSalesperson")
+  dealsApproved        Deal[]        @relation("DealApprovedBy")
+  dealPaymentsRecorded DealPayment[] @relation("DealPaymentRecordedBy")
+  vehicleExpenses      VehicleExpense[]
+  operationalExpenses  OperationalExpense[]
+  marketplaceC2c       MarketplaceListing[] @relation("MarketplaceC2cSeller")
+
+  @@map("user")
+}
+
+model Otp {
+  id           String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  phone        String      @db.VarChar(20)
+  code         String      @db.VarChar(6)
+  purpose      String      @db.VarChar(50)
+  is_used      Boolean     @default(false) @map("is_used")
+  attempts     Int         @default(0)
+  expires_at   DateTime    @map("expires_at") @db.Timestamptz
+  created_at   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  used_at      DateTime?   @map("used_at") @db.Timestamptz
+  ip_address   String?     @map("ip_address")
+
+  @@map("otp")
+}
+
+model RefreshToken {
+  id           String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id      String      @db.Uuid
+  token_hash   String      @db.VarChar(255) @map("token_hash")
+  device_info  String?     @map("device_info")
+  ip_address   String?     @map("ip_address")
+  expires_at   DateTime    @map("expires_at") @db.Timestamptz
+  revoked_at   DateTime?   @map("revoked_at") @db.Timestamptz
+  last_used_at DateTime?   @map("last_used_at") @db.Timestamptz
+  created_at   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  user         User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_token")
+}
+
+model Dealership {
+  id                      String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  owner_id                String            @db.Uuid
+  business_name           String            @map("business_name") @db.VarChar(255)
+  slug                    String            @unique @db.VarChar(255)
+  trade_license_no        String?           @map("trade_license_no") @db.VarChar(100)
+  nid_no                  String?           @map("nid_no") @db.VarChar(30)
+  status                  DealerStatus      @default(pending_approval)
+  subscription_tier       SubscriptionTier  @default(free) @map("subscription_tier")
+  subscription_expires_at DateTime?         @map("subscription_expires_at") @db.Timestamptz
+  listing_limit           Int               @default(10) @map("listing_limit")
+  staff_seat_limit        Int               @default(1) @map("staff_seat_limit")
+  location_limit          Int               @default(1) @map("location_limit")
+  district                String            @db.VarChar(100)
+  division                String            @db.VarChar(100)
+  address                 String?
+  lat                     Decimal?          @db.Decimal(9, 6)
+  lng                     Decimal?          @db.Decimal(9, 6)
+  logo_url                String?           @map("logo_url")
+  cover_photo_url         String?           @map("cover_photo_url")
+  primary_color           String?           @map("primary_color") @db.VarChar(7)
+  secondary_color         String?           @map("secondary_color") @db.VarChar(7)
+  phone                   String            @db.VarChar(20)
+  whatsapp_number         String?           @map("whatsapp_number") @db.VarChar(20)
+  email                   String?           @db.VarChar(255)
+  website_url             String?           @map("website_url")
+  business_hours          Json?             @map("business_hours")
+  rating                  Decimal?          @db.Decimal(3, 2)
+  review_count            Int               @default(0) @map("review_count")
+  total_listings          Int               @default(0) @map("total_listings")
+  total_deals             Int               @default(0) @map("total_deals")
+  approved_by             String?           @map("approved_by") @db.Uuid
+  approved_at             DateTime?         @map("approved_at") @db.Timestamptz
+  suspended_by            String?           @map("suspended_by") @db.Uuid
+  suspended_at            DateTime?         @map("suspended_at") @db.Timestamptz
+  suspension_reason       String?           @map("suspension_reason")
+  terminated_at           DateTime?         @map("terminated_at") @db.Timestamptz
+  termination_reason      String?           @map("termination_reason")
+  discount_threshold_pct  Decimal           @default(10.00) @map("discount_threshold_pct") @db.Decimal(5, 2)
+  target_margin_pct       Decimal           @default(20.00) @map("target_margin_pct") @db.Decimal(5, 2)
+  auto_publish_marketplace Boolean          @default(true) @map("auto_publish_marketplace")
+  auto_post_social        Boolean           @default(false) @map("auto_post_social")
+  posts_per_week          Int               @default(3) @map("posts_per_week")
+  created_at              DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updated_at              DateTime          @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at              DateTime?         @map("deleted_at") @db.Timestamptz
+
+  owner                   User              @relation("DealershipOwner", fields: [owner_id], references: [id])
+  approvedBy              User?             @relation("DealerApprovedBy", fields: [approved_by], references: [id])
+  suspendedBy             User?             @relation("DealerSuspendedBy", fields: [suspended_by], references: [id])
+
+  locations               DealershipLocation[]
+  staff                   DealerStaff[]
+  settings                DealerSettings?
+  vehicles                Vehicle[]
+  statusHistory           VehicleStatusHistory[]
+  reconAssessments        ReconAssessment[]
+  reconTasks              ReconTask[]
+  customers               Customer[]
+  leads                   Lead[]
+  leadInteractions        LeadInteraction[]
+  deals                   Deal[]
+  dealPayments            DealPayment[]
+  vehicleExpenses         VehicleExpense[]
+  operationalExpenses     OperationalExpense[]
+  marketplaceListings     MarketplaceListing[]
+  maestroInsights         MaestroInsight[]
+  automationRules         AutomationRule[]
+  automationLogs          AutomationLog[]
+  subscription            Subscription?
+  invoices                Invoice[]
+  paymentTransactions     PaymentTransaction[]
+
+  @@map("dealership")
+}
+
+model DealershipLocation {
+  id             String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String      @db.Uuid
+  name           String      @db.VarChar(255)
+  address        String
+  district       String      @db.VarChar(100)
+  division       String      @db.VarChar(100)
+  lat            Decimal?    @db.Decimal(9, 6)
+  lng            Decimal?    @db.Decimal(9, 6)
+  phone          String?     @db.VarChar(20)
+  is_primary     Boolean     @default(false) @map("is_primary")
+  is_active      Boolean     @default(true) @map("is_active")
+  created_at     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime    @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership  @relation(fields: [dealership_id], references: [id], onDelete: Cascade)
+  staff          DealerStaff[]
+  vehicles       Vehicle[]
+  leads          Lead[]
+  deals          Deal[]
+
+  @@map("dealership_location")
+}
+
+model DealerStaff {
+  id             String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String      @db.Uuid
+  user_id        String      @db.Uuid
+  role           UserRole
+  location_id    String?     @db.Uuid
+  is_active      Boolean     @default(true) @map("is_active")
+  invited_by     String?     @db.Uuid
+  invited_at     DateTime    @default(now()) @map("invited_at") @db.Timestamptz
+  accepted_at    DateTime?   @map("accepted_at") @db.Timestamptz
+  deactivated_at DateTime?   @map("deactivated_at") @db.Timestamptz
+  deactivated_by String?     @db.Uuid
+
+  sees_all_leads  Boolean    @default(false) @map("sees_all_leads")
+  commission_rate Decimal?   @map("commission_rate") @db.Decimal(5, 2)
+
+  created_at     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime    @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership  @relation(fields: [dealership_id], references: [id], onDelete: Cascade)
+  user           User        @relation("StaffUser", fields: [user_id], references: [id], onDelete: Cascade)
+  location       DealershipLocation? @relation(fields: [location_id], references: [id])
+  invitedBy      User?       @relation("StaffInvitedBy", fields: [invited_by], references: [id])
+  deactivatedBy  User?       @relation("StaffDeactivatedBy", fields: [deactivated_by], references: [id])
+
+  @@unique([dealership_id, user_id])
+  @@map("dealer_staff")
+}
+
+model PlanConfig {
+  id                    String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tier                  SubscriptionTier  @unique
+  display_name          String            @map("display_name") @db.VarChar(50)
+  monthly_price_bdt     Decimal           @map("monthly_price_bdt") @db.Decimal(10, 2)
+  listing_limit         Int               @map("listing_limit")
+  staff_seat_limit      Int               @map("staff_seat_limit")
+  location_limit        Int               @map("location_limit")
+  sms_quota_monthly     Int               @map("sms_quota_monthly")
+  features              Json
+  is_active             Boolean           @default(true) @map("is_active")
+  created_at            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime          @default(now()) @map("updated_at") @db.Timestamptz
+  subscriptions         Subscription[]
+
+  @@map("plan_config")
+}
+
+model DealerSettings {
+  id                        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id             String      @unique @db.Uuid
+  notify_new_lead_sms       Boolean     @default(true) @map("notify_new_lead_sms")
+  notify_new_lead_push      Boolean     @default(true) @map("notify_new_lead_push")
+  notify_aging_sms          Boolean     @default(true) @map("notify_aging_sms")
+  notify_hot_lead_sms       Boolean     @default(true) @map("notify_hot_lead_sms")
+  notify_daily_summary_sms  Boolean     @default(true) @map("notify_daily_summary_sms")
+  notify_daily_summary_push Boolean     @default(true) @map("notify_daily_summary_push")
+  daily_summary_time        String      @default("08:00:00") @map("daily_summary_time") // DB: TIME
+  lead_assignment_mode      String      @default("round_robin") @map("lead_assignment_mode")
+  default_assigned_to       String?     @db.Uuid @map("default_assigned_to")
+  whatsapp_away_enabled     Boolean     @default(false) @map("whatsapp_away_enabled")
+  whatsapp_greeting_enabled Boolean     @default(false) @map("whatsapp_greeting_enabled")
+  facebook_away_enabled     Boolean     @default(false) @map("facebook_away_enabled")
+  post_approval_required    Boolean     @default(true) @map("post_approval_required")
+  optimal_post_time         String      @default("09:00:00") @map("optimal_post_time")
+  default_loan_rate_pct     Decimal     @default(9.00) @map("default_loan_rate_pct") @db.Decimal(5, 2)
+  created_at                DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updated_at                DateTime    @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership                Dealership  @relation(fields: [dealership_id], references: [id], onDelete: Cascade)
+  assignedUser              User?       @relation("DefaultAssignedTo", fields: [default_assigned_to], references: [id])
+
+  @@map("dealer_settings")
+}
+
+model Vehicle {
+  id                    String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id         String            @db.Uuid
+  location_id           String?           @db.Uuid
+  stock_no              String            @map("stock_no") @db.VarChar(20)
+  vin                   String?           @db.VarChar(17)
+  registration_no       String?           @map("registration_no") @db.VarChar(30)
+  make                  String            @db.VarChar(100)
+  model                 String            @db.VarChar(100)
+  year                  Int               @db.SmallInt
+  variant               String?           @db.VarChar(200)
+  body_type             String?           @map("body_type") @db.VarChar(50)
+  engine_cc             Int?              @map("engine_cc")
+  engine_type           String?           @map("engine_type") @db.VarChar(50)
+  fuel_type             FuelType          @default(petrol) @map("fuel_type")
+  transmission          TransmissionType  @default(automatic)
+  drive_type            String?           @map("drive_type") @db.VarChar(10)
+  seating_capacity      Int?              @map("seating_capacity") @db.SmallInt
+  color                 String?           @db.VarChar(50)
+  doors                 Int?              @db.SmallInt
+  condition             VehicleCondition  @default(used)
+  mileage_km            Int               @map("mileage_km")
+  mileage_bucket        String            @map("mileage_bucket") @db.VarChar(20)
+  asking_price          Decimal           @map("asking_price") @db.Decimal(12, 2)
+  acquisition_cost      Decimal?          @map("acquisition_cost") @db.Decimal(12, 2)
+  recon_total           Decimal           @default(0) @map("recon_total") @db.Decimal(12, 2)
+  net_profit_estimate   Decimal?          @map("net_profit_estimate") @db.Decimal(12, 2)
+  floor_plan_cost       Decimal?          @map("floor_plan_cost") @db.Decimal(12, 2)
+  acquisition_source    String?           @map("acquisition_source") @db.VarChar(50)
+  acquisition_date      DateTime?         @map("acquisition_date") @db.Date
+  acquired_from         String?           @map("acquired_from") @db.VarChar(255)
+  status                VehicleStatus     @default(acquired)
+  available_at          DateTime?         @map("available_at") @db.Timestamptz
+  sold_at               DateTime?         @map("sold_at") @db.Timestamptz
+  photos                Json              @default("[]")
+  video_url             String?           @map("video_url")
+  photo_count           Int               @default(0) @map("photo_count")
+  marketplace_published Boolean           @default(true) @map("marketplace_published")
+  last_synced_at        DateTime?         @map("last_synced_at") @db.Timestamptz
+  sync_error            String?           @map("sync_error")
+  specs                 Json              @default("{}")
+  internal_notes        String?           @map("internal_notes")
+  description           String?
+  features              Json              @default("[]")
+  created_at            DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime          @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at            DateTime?         @map("deleted_at") @db.Timestamptz
+
+  dealership            Dealership        @relation(fields: [dealership_id], references: [id])
+  location              DealershipLocation? @relation(fields: [location_id], references: [id])
+
+  statusHistory         VehicleStatusHistory[]
+  reconAssessment       ReconAssessment?
+  reconTasks            ReconTask[]
+  leads                 Lead[]
+  deals                 Deal[]            @relation("DealVehicle")
+  dealsTradeIn          Deal[]            @relation("DealTradeInVehicle")
+  expenses              VehicleExpense[]
+  marketplaceListings   MarketplaceListing[]
+
+  @@unique([dealership_id, stock_no])
+  @@map("vehicle")
+}
+
+model VehicleStatusHistory {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id String        @db.Uuid
+  vehicle_id    String        @db.Uuid
+  from_status   VehicleStatus? @map("from_status")
+  to_status     VehicleStatus @map("to_status")
+  changed_by    String        @db.Uuid @map("changed_by")
+  reason        String?
+  created_at    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  dealership    Dealership    @relation(fields: [dealership_id], references: [id])
+  vehicle       Vehicle       @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [changed_by], references: [id])
+
+  @@map("vehicle_status_history")
+}
+
+model ReconAssessment {
+  id                String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id     String          @db.Uuid
+  vehicle_id        String          @unique @db.Uuid
+  engine_status     ReconItemStatus @default(ok) @map("engine_status")
+  body_status       ReconItemStatus @default(ok) @map("body_status")
+  paint_status      ReconItemStatus @default(ok) @map("paint_status")
+  interior_status   ReconItemStatus @default(ok) @map("interior_status")
+  electricals_status ReconItemStatus @default(ok) @map("electricals_status")
+  tyres_status      ReconItemStatus @default(ok) @map("tyres_status")
+  ac_status         ReconItemStatus @default(ok) @map("ac_status")
+  brakes_status     ReconItemStatus @default(ok) @map("brakes_status")
+  engine_notes      String?         @map("engine_notes")
+  body_notes        String?         @map("body_notes")
+  paint_notes       String?         @map("paint_notes")
+  interior_notes    String?         @map("interior_notes")
+  electricals_notes String?         @map("electricals_notes")
+  tyres_notes       String?         @map("tyres_notes")
+  ac_notes          String?         @map("ac_notes")
+  brakes_notes      String?         @map("brakes_notes")
+  overall_notes     String?         @map("overall_notes")
+  assessed_by       String          @db.Uuid @map("assessed_by")
+  assessed_at       DateTime        @default(now()) @map("assessed_at") @db.Timestamptz
+  completed_at      DateTime?       @map("completed_at") @db.Timestamptz
+  created_at        DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at        DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership        Dealership      @relation(fields: [dealership_id], references: [id])
+  vehicle           Vehicle         @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  assessor          User            @relation(fields: [assessed_by], references: [id])
+  tasks             ReconTask[]
+
+  @@map("recon_assessment")
+}
+
+model ReconTask {
+  id               String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id    String          @db.Uuid
+  vehicle_id       String          @db.Uuid
+  assessment_id    String          @db.Uuid
+  category         String          @db.VarChar(50)
+  description      String
+  assigned_to_user String?         @db.Uuid @map("assigned_to_user")
+  assigned_to_name String?         @map("assigned_to_name") @db.VarChar(255)
+  estimated_cost   Decimal?        @map("estimated_cost") @db.Decimal(12, 2)
+  actual_cost      Decimal?        @map("actual_cost") @db.Decimal(12, 2)
+  status           ReconTaskStatus @default(pending)
+  priority         Int             @default(2) @db.SmallInt
+  started_at       DateTime?       @map("started_at") @db.Timestamptz
+  completed_at     DateTime?       @map("completed_at") @db.Timestamptz
+  notes            String?
+  receipt_url      String?         @map("receipt_url")
+  created_by       String          @db.Uuid @map("created_by")
+  created_at       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at       DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership       Dealership      @relation(fields: [dealership_id], references: [id])
+  vehicle          Vehicle         @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  assessment       ReconAssessment @relation(fields: [assessment_id], references: [id])
+  assignedUser     User?           @relation("ReconTaskAssignedTo", fields: [assigned_to_user], references: [id])
+  createdByUser    User            @relation("ReconTaskCreatedBy", fields: [created_by], references: [id])
+  expenses         VehicleExpense[]
+
+  @@map("recon_task")
+}
+
+model Customer {
+  id                    String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id         String      @db.Uuid
+  user_id               String?     @db.Uuid
+  full_name             String      @map("full_name") @db.VarChar(255)
+  phone                 String      @db.VarChar(20)
+  email                 String?     @db.VarChar(255)
+  nid_no                String?     @map("nid_no") @db.VarChar(30)
+  district              String?     @db.VarChar(100)
+  division              String?     @db.VarChar(100)
+  address               String?
+  preferred_makes       Json?       @map("preferred_makes")
+  preferred_body_types  Json?       @map("preferred_body_types")
+  budget_min            Decimal?    @map("budget_min") @db.Decimal(12, 2)
+  budget_max            Decimal?    @map("budget_max") @db.Decimal(12, 2)
+  opted_in_sms          Boolean     @default(true) @map("opted_in_sms")
+  opted_in_whatsapp     Boolean     @default(true) @map("opted_in_whatsapp")
+  opted_in_email        Boolean     @default(true) @map("opted_in_email")
+  opted_in_inventory_alerts Boolean @default(false) @map("opted_in_inventory_alerts")
+  total_purchases       Int         @default(0) @map("total_purchases") @db.SmallInt
+  total_spend           Decimal     @default(0) @map("total_spend") @db.Decimal(14, 2)
+  last_interaction_at   DateTime?   @map("last_interaction_at") @db.Timestamptz
+  notes                 String?
+  tags                  Json        @default("[]")
+  created_at            DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime    @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at            DateTime?   @map("deleted_at") @db.Timestamptz
+
+  dealership            Dealership  @relation(fields: [dealership_id], references: [id])
+  user                  User?       @relation(fields: [user_id], references: [id])
+  leads                 Lead[]
+  deals                 Deal[]
+
+  @@unique([dealership_id, phone])
+  @@map("customer")
+}
+
+model Lead {
+  id                    String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id         String        @db.Uuid
+  customer_id           String?       @db.Uuid
+  assigned_to           String?       @db.Uuid
+  vehicle_id            String?       @db.Uuid
+  location_id           String?       @db.Uuid
+  buyer_name            String        @map("buyer_name") @db.VarChar(255)
+  buyer_phone           String        @map("buyer_phone") @db.VarChar(20)
+  buyer_email           String?       @map("buyer_email") @db.VarChar(255)
+  buyer_district        String?       @map("buyer_district") @db.VarChar(100)
+  source                LeadSource    @default(walk_in)
+  stage                 LeadStage     @default(new)
+  priority              LeadPriority  @default(warm)
+  lead_score            Int           @default(0) @map("lead_score") @db.SmallInt
+  lost_reason           String?       @map("lost_reason") @db.VarChar(100)
+  lost_reason_detail    String?       @map("lost_reason_detail")
+  budget_min            Decimal?      @map("budget_min") @db.Decimal(12, 2)
+  budget_max            Decimal?      @map("budget_max") @db.Decimal(12, 2)
+  next_follow_up        DateTime?     @map("next_follow_up") @db.Timestamptz
+  follow_up_method      String?       @map("follow_up_method") // stored as string mapping to channel
+  contact_sla_breached  Boolean       @default(false) @map("contact_sla_breached")
+  test_drive_scheduled_at DateTime?   @map("test_drive_scheduled_at") @db.Timestamptz
+  test_drive_completed_at DateTime?   @map("test_drive_completed_at") @db.Timestamptz
+  quote_amount          Decimal?      @map("quote_amount") @db.Decimal(12, 2)
+  quote_sent_at         DateTime?     @map("quote_sent_at") @db.Timestamptz
+  enquiry_count         Int           @default(1) @map("enquiry_count") @db.SmallInt
+  personalized_token    String?       @map("personalized_token") @db.VarChar(100)
+  personalized_link_views Int         @default(0) @map("personalized_link_views") @db.SmallInt
+  fb_lead_form_id       String?       @map("fb_lead_form_id") @db.VarChar(100)
+  fb_ad_id              String?       @map("fb_ad_id") @db.VarChar(100)
+  utm_source            String?       @map("utm_source") @db.VarChar(100)
+  utm_medium            String?       @map("utm_medium") @db.VarChar(100)
+  utm_campaign          String?       @map("utm_campaign") @db.VarChar(100)
+  notes                 String?
+  created_at            DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at            DateTime?     @map("deleted_at") @db.Timestamptz
+
+  dealership            Dealership    @relation(fields: [dealership_id], references: [id])
+  customer              Customer?     @relation(fields: [customer_id], references: [id])
+  assignedUser          User?         @relation("LeadAssignedTo", fields: [assigned_to], references: [id])
+  vehicle               Vehicle?      @relation(fields: [vehicle_id], references: [id])
+  location              DealershipLocation? @relation(fields: [location_id], references: [id])
+  interactions          LeadInteraction[]
+  deals                 Deal[]
+  automationLogs        AutomationLog[]
+
+  @@map("lead")
+}
+
+model LeadInteraction {
+  id             String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String            @db.Uuid
+  lead_id        String            @db.Uuid
+  user_id        String?           @db.Uuid
+  type           String            @db.VarChar(50)
+  direction      String?           @db.VarChar(10)
+  channel        AutomationChannel?
+  summary        String?
+  body           String?
+  duration_sec   Int?              @map("duration_sec")
+  metadata       Json?
+  created_at     DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  dealership     Dealership        @relation(fields: [dealership_id], references: [id])
+  lead           Lead              @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  user           User?             @relation(fields: [user_id], references: [id])
+
+  @@map("lead_interaction")
+}
+
+model Deal {
+  id                    String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id         String        @db.Uuid
+  lead_id               String        @db.Uuid
+  vehicle_id            String        @db.Uuid
+  customer_id           String        @db.Uuid
+  salesperson_id        String        @db.Uuid
+  manager_approval_id   String?       @db.Uuid @map("manager_approval_id")
+  location_id           String?       @db.Uuid
+  deal_type             DealType      @default(cash) @map("deal_type")
+  sale_price            Decimal       @map("sale_price") @db.Decimal(12, 2)
+  list_price            Decimal       @map("list_price") @db.Decimal(12, 2)
+  discount_amount       Decimal       @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  trade_in_vehicle_id   String?       @db.Uuid @map("trade_in_vehicle_id")
+  trade_in_value        Decimal       @default(0) @map("trade_in_value") @db.Decimal(12, 2)
+  gross_profit          Decimal?      @map("gross_profit") @db.Decimal(12, 2)
+  lender_name           String?       @map("lender_name") @db.VarChar(255)
+  loan_amount           Decimal?      @map("loan_amount") @db.Decimal(12, 2)
+  down_payment          Decimal?      @map("down_payment") @db.Decimal(12, 2)
+  interest_rate_pct     Decimal?      @map("interest_rate_pct") @db.Decimal(5, 2)
+  loan_term_months      Int?          @map("loan_term_months") @db.SmallInt
+  monthly_instalment    Decimal?      @map("monthly_instalment") @db.Decimal(12, 2)
+  finance_app_status    String?       @map("finance_app_status") @db.VarChar(50)
+  deposit_paid          Decimal       @default(0) @map("deposit_paid") @db.Decimal(12, 2)
+  balance_due           Decimal?      @map("balance_due") @db.Decimal(12, 2)
+  total_paid            Decimal       @default(0) @map("total_paid") @db.Decimal(12, 2)
+  status                DealStatus    @default(draft)
+  approval_requested_at DateTime?     @map("approval_requested_at") @db.Timestamptz
+  approved_at           DateTime?     @map("approved_at") @db.Timestamptz
+  delivered_at          DateTime?     @map("delivered_at") @db.Timestamptz
+  cancelled_at          DateTime?     @map("cancelled_at") @db.Timestamptz
+  cancellation_reason   String?       @map("cancellation_reason")
+  bill_of_sale_url      String?       @map("bill_of_sale_url")
+  bill_of_sale_version  Int           @default(0) @map("bill_of_sale_version") @db.SmallInt
+  delivery_district     String?       @map("delivery_district") @db.VarChar(100)
+  delivery_address      String?       @map("delivery_address")
+  delivery_notes        String?       @map("delivery_notes")
+  created_at            DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updated_at            DateTime      @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at            DateTime?     @map("deleted_at") @db.Timestamptz
+
+  dealership            Dealership    @relation(fields: [dealership_id], references: [id])
+  lead                  Lead          @relation(fields: [lead_id], references: [id])
+  vehicle               Vehicle       @relation("DealVehicle", fields: [vehicle_id], references: [id])
+  customer              Customer      @relation(fields: [customer_id], references: [id])
+  salesperson           User          @relation("DealSalesperson", fields: [salesperson_id], references: [id])
+  managerApproval       User?         @relation("DealApprovedBy", fields: [manager_approval_id], references: [id])
+  location              DealershipLocation? @relation(fields: [location_id], references: [id])
+  tradeInVehicle        Vehicle?      @relation("DealTradeInVehicle", fields: [trade_in_vehicle_id], references: [id])
+
+  payments              DealPayment[]
+
+  @@map("deal")
+}
+
+model DealPayment {
+  id             String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String        @db.Uuid
+  deal_id        String        @db.Uuid
+  amount         Decimal       @db.Decimal(12, 2)
+  payment_method PaymentMethod @map("payment_method")
+  payment_type   String        @default("deposit") @map("payment_type") @db.VarChar(20)
+  reference_no   String?       @map("reference_no") @db.VarChar(255)
+  recorded_by    String        @db.Uuid @map("recorded_by")
+  notes          String?
+  receipt_url    String?       @map("receipt_url")
+  paid_at        DateTime      @default(now()) @map("paid_at") @db.Timestamptz
+  created_at     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  dealership     Dealership    @relation(fields: [dealership_id], references: [id])
+  deal           Deal          @relation(fields: [deal_id], references: [id], onDelete: Cascade)
+  recordedUser   User          @relation("DealPaymentRecordedBy", fields: [recorded_by], references: [id])
+
+  @@map("deal_payment")
+}
+
+model ExpenseCategory {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  type         String        @default("vehicle") @db.VarChar(20)
+  name         String        @db.VarChar(100)
+  slug         String        @db.VarChar(100)
+  icon         String?       @db.VarChar(50)
+  is_active    Boolean       @default(true) @map("is_active")
+  sort_order   Int           @default(0) @map("sort_order") @db.SmallInt
+  created_at   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  vehicleExpenses      VehicleExpense[]
+  operationalExpenses  OperationalExpense[]
+
+  @@unique([type, slug])
+  @@map("expense_category")
+}
+
+model VehicleExpense {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String          @db.Uuid
+  vehicle_id     String          @db.Uuid
+  recon_task_id  String?         @db.Uuid @map("recon_task_id")
+  category_id    String          @db.Uuid @map("category_id")
+  amount         Decimal         @db.Decimal(12, 2)
+  vendor         String?         @db.VarChar(255)
+  invoice_no     String?         @map("invoice_no") @db.VarChar(100)
+  date           DateTime        @default(now()) @db.Date
+  receipt_url    String?         @map("receipt_url")
+  notes          String?
+  created_by     String          @db.Uuid @map("created_by")
+  created_at     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership      @relation(fields: [dealership_id], references: [id])
+  vehicle        Vehicle         @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  reconTask      ReconTask?      @relation(fields: [recon_task_id], references: [id])
+  category       ExpenseCategory @relation(fields: [category_id], references: [id])
+  createdByUser  User            @relation(fields: [created_by], references: [id])
+
+  @@map("vehicle_expense")
+}
+
+model OperationalExpense {
+  id             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String          @db.Uuid
+  category_id    String          @db.Uuid @map("category_id")
+  amount         Decimal         @db.Decimal(12, 2)
+  date           DateTime        @default(now()) @db.Date
+  payment_method PaymentMethod   @default(cash) @map("payment_method")
+  reference_no   String?         @map("reference_no") @db.VarChar(100)
+  receipt_url    String?         @map("receipt_url")
+  notes          String?
+  recurring      Boolean         @default(false)
+  recur_cycle    RecurCycle?     @map("recur_cycle")
+  recur_parent_id String?        @db.Uuid @map("recur_parent_id")
+  created_by     String          @db.Uuid @map("created_by")
+  created_at     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership      @relation(fields: [dealership_id], references: [id])
+  category       ExpenseCategory @relation(fields: [category_id], references: [id])
+  createdByUser  User            @relation(fields: [created_by], references: [id])
+  parentExpense  OperationalExpense? @relation("RecurringChildren", fields: [recur_parent_id], references: [id])
+  childExpenses  OperationalExpense[] @relation("RecurringChildren")
+
+  @@map("operational_expense")
+}
+
+model MarketplaceListing {
+  id                  String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  vehicle_id          String?         @db.Uuid
+  dealership_id       String?         @db.Uuid
+  c2c_seller_id       String?         @db.Uuid @map("c2c_seller_id")
+  listing_type        ListingType     @map("listing_type")
+  seller_type         SellerType      @map("seller_type")
+  slug                String          @db.VarChar(500)
+  title               String          @db.VarChar(500)
+  description         String?
+  asking_price        Decimal         @map("asking_price") @db.Decimal(12, 2)
+  original_price      Decimal?        @map("original_price") @db.Decimal(12, 2)
+  price_updated_at    DateTime?       @map("price_updated_at") @db.Timestamptz
+  price_drop_flag     Boolean         @default(false) @map("price_drop_flag")
+  make                String          @db.VarChar(100)
+  model               String          @db.VarChar(100)
+  year                Int             @db.SmallInt
+  variant             String?         @db.VarChar(200)
+  body_type           String?         @map("body_type") @db.VarChar(50)
+  engine_cc           Int?            @map("engine_cc")
+  fuel_type           FuelType        @default(petrol) @map("fuel_type")
+  transmission        TransmissionType @default(automatic)
+  condition           VehicleCondition @default(used)
+  mileage_km          Int             @map("mileage_km")
+  mileage_bucket      String          @map("mileage_bucket") @db.VarChar(20)
+  district            String          @db.VarChar(100)
+  division            String          @db.VarChar(100)
+  photos              Json            @default("[]")
+  photo_count         Int             @default(0) @map("photo_count") @db.SmallInt
+  status              ListingStatus   @default(active)
+  views               Int             @default(0)
+  inquiries           Int             @default(0)
+  is_featured         Boolean         @default(false) @map("is_featured")
+  featured_slot       String?         @map("featured_slot") // string mapping to featured_slot enum
+  featured_expires_at DateTime?       @map("featured_expires_at") @db.Timestamptz
+  imv_p50             Decimal?        @map("imv_p50") @db.Decimal(12, 2)
+  imv_sample_size     Int?            @map("imv_sample_size")
+  deal_score          Decimal?        @map("deal_score") @db.Decimal(6, 4)
+  deal_rating         DealRating      @default(unrated) @map("deal_rating")
+  created_at          DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at          DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at          DateTime?       @map("deleted_at") @db.Timestamptz
+
+  vehicle             Vehicle?        @relation(fields: [vehicle_id], references: [id])
+  dealership          Dealership?     @relation(fields: [dealership_id], references: [id])
+  c2cSeller           User?           @relation("MarketplaceC2cSeller", fields: [c2c_seller_id], references: [id])
+
+  @@map("marketplace_listing")
+}
+
+model SyncAuditLog {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id String   @db.Uuid
+  vehicle_id    String   @db.Uuid
+  event_type    String   @db.VarChar(50)
+  status        String   @db.VarChar(20)
+  duration_ms   Int
+  error_message String?
+  fanout_results Json?
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  @@map("sync_audit_log")
+}
+
+enum ImvOverrideType {
+  adjust_p50_by_percent
+  set_manual_p50
+  suppress_rating_for_period
+}
+
+model ImvOverride {
+  id                   String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  make                 String          @db.VarChar(100)
+  model                String          @db.VarChar(100)
+  year                 Int             @db.SmallInt
+  mileage_bucket       String          @map("mileage_bucket") @db.VarChar(20)
+  condition            VehicleCondition @map("condition")
+  district             String          @db.VarChar(100)
+  override_type        ImvOverrideType @map("override_type")
+  override_value       Decimal         @map("override_value") @db.Decimal(12, 2)
+  reason_code          String          @map("reason_code") @db.VarChar(100)
+  override_expires_at  DateTime        @map("override_expires_at") @db.Timestamptz
+  is_approved          Boolean         @default(false) @map("is_approved")
+  approved_by          String?         @map("approved_by") @db.Uuid
+  created_at           DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at           DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+  deleted_at           DateTime?       @map("deleted_at") @db.Timestamptz
+
+  @@map("imv_override")
+}
+
+model ImvCluster {
+  id                 String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  make               String          @db.VarChar(100)
+  model              String          @db.VarChar(100)
+  year               Int             @db.SmallInt
+  mileage_bucket     String          @map("mileage_bucket") @db.VarChar(20)
+  condition          VehicleCondition @map("condition")
+  district           String          @db.VarChar(100)
+  division           String          @db.VarChar(100)
+  sample_size        Int             @map("sample_size")
+  price_min          Decimal         @map("price_min") @db.Decimal(12, 2)
+  price_max          Decimal         @map("price_max") @db.Decimal(12, 2)
+  price_mean         Decimal         @map("price_mean") @db.Decimal(12, 2)
+  price_stddev       Decimal         @map("price_stddev") @db.Decimal(12, 2)
+  p5                 Decimal         @db.Decimal(12, 2)
+  p10                Decimal         @db.Decimal(12, 2)
+  p25                Decimal         @db.Decimal(12, 2)
+  p50                Decimal         @db.Decimal(12, 2)
+  p75                Decimal         @db.Decimal(12, 2)
+  p90                Decimal         @db.Decimal(12, 2)
+  p95                Decimal         @db.Decimal(12, 2)
+  p99                Decimal         @db.Decimal(12, 2)
+  prev_p50           Decimal?        @map("prev_p50") @db.Decimal(12, 2)
+  pct_change_30d     Decimal?        @map("pct_change_30d") @db.Decimal(6, 2)
+  trend_direction    String          @map("trend_direction") @db.VarChar(20)
+  confidence         String          @db.VarChar(20)
+  last_calculated_at DateTime        @default(now()) @map("last_calculated_at") @db.Timestamptz
+
+  @@unique([make, model, year, mileage_bucket, condition, district])
+  @@map("imv_cluster")
+}
+
+model PriceTrend {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  make          String   @db.VarChar(100)
+  model         String   @db.VarChar(100)
+  year          Int      @db.SmallInt
+  district      String   @db.VarChar(100)
+  recorded_date DateTime @map("recorded_date") @db.Date
+  avg_price     Decimal  @map("avg_price") @db.Decimal(12, 2)
+  median_price  Decimal  @map("median_price") @db.Decimal(12, 2)
+  listing_count Int      @map("listing_count")
+
+  @@unique([make, model, year, district, recorded_date])
+  @@map("price_trend")
+}
+
+model ImvCalculationRun {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  status           String   @db.VarChar(20)
+  clusters_updated Int      @map("clusters_updated")
+  listings_rated   Int      @map("listings_rated")
+  started_at       DateTime @map("started_at") @db.Timestamptz
+  completed_at     DateTime @map("completed_at") @db.Timestamptz
+  triggered_by     String   @map("triggered_by") @db.VarChar(50)
+
+  @@map("imv_calculation_run")
+}
+
+model MaestroInsight {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String    @db.Uuid
+  type           String    @db.VarChar(50)
+  priority       Int       @db.SmallInt
+  title          String    @db.VarChar(255)
+  message        String    @db.Text
+  supporting_data Json     @default("{}") @map("supporting_data")
+  deep_link      String    @map("deep_link") @db.VarChar(255)
+  is_actioned    Boolean   @default(false) @map("is_actioned")
+  is_dismissed   Boolean   @default(false) @map("is_dismissed")
+  expires_at     DateTime  @map("expires_at") @db.Timestamptz
+  created_at     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership @relation(fields: [dealership_id], references: [id])
+
+  @@map("maestro_insight")
+}
+
+model AutomationRule {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id  String   @db.Uuid
+  name           String   @db.VarChar(255)
+  trigger_event  String   @map("trigger_event") @db.VarChar(100)
+  channel        String   @db.VarChar(50)
+  is_active      Boolean  @default(true) @map("is_active")
+  actions        Json?    @default("{}")
+  sequence_steps Json?    @default("[]") @map("sequence_steps")
+  created_at     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updated_at     DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership     Dealership @relation(fields: [dealership_id], references: [id])
+
+  @@map("automation_rule")
+}
+
+model AutomationLog {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id String    @db.Uuid
+  lead_id       String?   @db.Uuid
+  contact_phone String?   @map("contact_phone") @db.VarChar(20)
+  contact_email String?   @map("contact_email") @db.VarChar(255)
+  channel       String    @db.VarChar(50)
+  rule_id       String?   @db.Uuid
+  step_number   Int?      @map("step_number") @db.SmallInt
+  status        String    @db.VarChar(20)
+  error_message String?   @map("error_message") @db.Text
+  retry_count   Int       @default(0) @map("retry_count") @db.SmallInt
+  metadata      Json?     @default("{}")
+  created_at    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  dealership    Dealership @relation(fields: [dealership_id], references: [id])
+  lead          Lead?      @relation(fields: [lead_id], references: [id])
+
+  @@map("automation_log")
+}
+
+model PlatformCalendar {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  date         DateTime @db.Date
+  name         String   @db.VarChar(100)
+  type         String   @db.VarChar(50)
+  country      String   @default("BD") @db.VarChar(10)
+
+  @@unique([date, country])
+  @@map("platform_calendar")
+}
+
+model Subscription {
+  id                  String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id       String            @unique @db.Uuid
+  plan_id             String            @db.Uuid
+  tier                SubscriptionTier
+  status              String            @default("active") @db.VarChar(20)
+  started_at          DateTime          @default(now()) @map("started_at") @db.Timestamptz
+  expires_at          DateTime          @map("expires_at") @db.Timestamptz
+  cancelled_at        DateTime?         @map("cancelled_at") @db.Timestamptz
+  cancellation_reason String?           @map("cancellation_reason") @db.Text
+  auto_renew          Boolean           @default(true) @map("auto_renew")
+  monthly_price_bdt   Decimal           @map("monthly_price_bdt") @db.Decimal(10, 2)
+  currency            String            @default("BDT") @db.VarChar(3)
+  created_at          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updated_at          DateTime          @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership          Dealership        @relation(fields: [dealership_id], references: [id])
+  plan                PlanConfig        @relation(fields: [plan_id], references: [id])
+
+  @@map("subscription")
+}
+
+model Invoice {
+  id               String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  dealership_id    String          @db.Uuid
+  invoice_no       String          @unique @db.VarChar(50)
+  type             String          @default("subscription") @db.VarChar(30)
+  amount_bdt       Decimal         @map("amount_bdt") @db.Decimal(10, 2)
+  discount_bdt     Decimal         @default(0) @map("discount_bdt") @db.Decimal(10, 2)
+  total_bdt        Decimal         @map("total_bdt") @db.Decimal(10, 2)
+  status           String          @default("pending") @db.VarChar(20)
+  due_date         DateTime        @map("due_date") @db.Date
+  paid_at          DateTime?       @map("paid_at") @db.Timestamptz
+  period_start     DateTime?       @map("period_start") @db.Date
+  period_end       DateTime?       @map("period_end") @db.Date
+  pdf_url          String?         @map("pdf_url") @db.Text
+  idempotency_key  String?         @unique @map("idempotency_key") @db.VarChar(100)
+  created_at       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updated_at       DateTime        @default(now()) @map("updated_at") @db.Timestamptz
+
+  dealership       Dealership      @relation(fields: [dealership_id], references: [id])
+  transactions     PaymentTransaction[]
+
+  @@map("invoice")
+}
+
+model PaymentTransaction {
+  id                     String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  invoice_id             String        @db.Uuid
+  dealership_id          String        @db.Uuid
+  idempotency_key        String        @unique @map("idempotency_key") @db.VarChar(100)
+  payment_method         PaymentMethod @map("payment_method")
+  gateway                String        @db.VarChar(30)
+  amount_bdt             Decimal       @map("amount_bdt") @db.Decimal(10, 2)
+  status                 String        @default("initiated") @db.VarChar(20)
+  gateway_transaction_id String?       @map("gateway_transaction_id") @db.VarChar(255)
+  gateway_response       Json?         @map("gateway_response")
+  initiated_at           DateTime      @default(now()) @map("initiated_at") @db.Timestamptz
+  completed_at           DateTime?     @map("completed_at") @db.Timestamptz
+  failure_reason         String?       @map("failure_reason") @db.VarChar(255)
+  attempt_number         Int           @default(1) @map("attempt_number") @db.SmallInt
+  created_at             DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  invoice                Invoice       @relation(fields: [invoice_id], references: [id])
+  dealership             Dealership    @relation(fields: [dealership_id], references: [id])
+
+  @@map("payment_transaction")
+}
+
+model PlatformAuditLog {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  actor_id     String   @db.Uuid
+  actor_ip     String   @db.VarChar(45)
+  action       String   @db.VarChar(100)
+  before_state String?  @db.Text
+  after_state  String?  @db.Text
+  created_at   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("platform_audit_log")
+}
+
+model EntityChangeLog {
+  id                     String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  entity_type            String   @db.VarChar(100)
+  entity_id              String   @db.Uuid
+  action                 String   @db.VarChar(50)
+  before_state           String?  @db.Text
+  after_state            String?  @db.Text
+  actor_role             String   @db.VarChar(50)
+  impersonated_dealer_id String?  @db.Uuid
+  actor_id               String   @db.Uuid
+  created_at             DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("entity_change_log")
+}
+
+
