@@ -100,6 +100,15 @@ CREATE TYPE seller_type AS ENUM (
   'dealer', 'private'
 );
 
+CREATE TYPE sync_event_type AS ENUM (
+  'create', 'price_update', 'status_change', 'photo_update',
+  'recon_complete', 'sold', 'deleted', 'visibility_toggle', 'restore'
+);
+
+CREATE TYPE sync_status AS ENUM (
+  'success', 'failed', 'dlq', 'skipped'
+);
+
 -- 2. CORE IDENTITY & AUTH TABLES
 CREATE TABLE "user" (
   id                   UUID        NOT NULL DEFAULT uuid_generate_v4(),
