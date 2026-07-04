@@ -58,7 +58,7 @@ jobs:
 
       - name: Deploy admin panel to Vercel (staging)
         run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }}
-          working-directory: apps/admin
+        working-directory: apps/admin
 
       - name: Deploy Cloudflare Worker (Staging)
         uses: cloudflare/wrangler-action@v3
