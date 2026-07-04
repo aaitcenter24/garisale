@@ -50,12 +50,22 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
       # GATE 5: Deploy frontend to Vercel
+      - name: Install Vercel CLI
+        run: npm i -g vercel
+
       - name: Deploy marketplace to Vercel (staging)
         run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy admin panel to Vercel (staging)
         run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }}
           working-directory: apps/admin
+
+      - name: Deploy Cloudflare Worker (Staging)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'worker'
+          environment: 'staging'
 
       # GATE 6: Smoke tests against staging
       - name: Run smoke tests

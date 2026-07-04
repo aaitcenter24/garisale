@@ -73,12 +73,22 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
 
       # GATE 6: Deploy frontends
+      - name: Install Vercel CLI
+        run: npm i -g vercel
+
       - name: Deploy marketplace (Vercel production)
         run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy admin panel (Vercel production)
         run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
         working-directory: apps/admin
+
+      - name: Deploy Cloudflare Worker (Production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: 'worker'
+          environment: 'production'
 
       # GATE 7: Post-deploy smoke tests
       - name: Production smoke tests
