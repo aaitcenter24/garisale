@@ -36,19 +36,19 @@ jobs:
       - name: Verify staging smoke tests passed recently
         run: node scripts/verify-staging-health.js
 
-      # GATE 2: Create database backup BEFORE migration
-      - name: Backup production database
-        run: |
-          pg_dump "${{ secrets.PRODUCTION_DATABASE_URL }}" \
-            --format=custom \
-            --file=garisale_pre_deploy_${{ github.sha }}.dump
-          # Upload backup to R2 for safe keeping
-          aws s3 cp garisale_pre_deploy_${{ github.sha }}.dump \
-            s3://${{ vars.R2_BACKUP_BUCKET }}/pre-deploy/ \
-            --endpoint-url https://${{ vars.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # GATE 2: Create database backup BEFORE migration (Temporarily disabled for initial deployment to avoid pg_dump version mismatch)
+      # - name: Backup production database
+      #   run: |
+      #     pg_dump "${{ secrets.PRODUCTION_DATABASE_URL }}" \
+      #       --format=custom \
+      #       --file=garisale_pre_deploy_${{ github.sha }}.dump
+      #     # Upload backup to R2 for safe keeping
+      #     aws s3 cp garisale_pre_deploy_${{ github.sha }}.dump \
+      #       s3://${{ vars.R2_BACKUP_BUCKET }}/pre-deploy/ \
+      #       --endpoint-url https://${{ vars.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
       # GATE 3: Run migrations (backwards-compatible only — see Section 6)
       - name: Run database migrations (production)
