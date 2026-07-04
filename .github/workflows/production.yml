@@ -53,7 +53,7 @@ jobs:
       # GATE 3: Run migrations (backwards-compatible only — see Section 6)
       - name: Run database migrations (production)
         run: |
-          npx prisma migrate deploy
+          npm run prisma:migrate:deploy
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
 

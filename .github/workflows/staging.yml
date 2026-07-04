@@ -30,7 +30,7 @@ jobs:
 
       # GATE 3: Run database migrations on staging (must succeed)
       - name: Run Prisma migrations
-        run: npx prisma migrate deploy
+        run: npm run prisma:migrate:deploy
         env:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
 
