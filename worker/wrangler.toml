@@ -1,0 +1,27 @@
+name = "garisale-domain-router"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[env.production]
+  routes = [
+    { pattern = "*.garisale.com/*", zone_name = "garisale.com" }
+  ]
+
+  kv_namespaces = [
+    { binding = "DOMAIN_CACHE", id = "KV_NAMESPACE_ID_PRODUCTION" }
+  ]
+
+  [env.production.vars]
+    VERCEL_APP_URL = "https://dealer.garisale.com"
+
+[env.staging]
+  routes = [
+    { pattern = "*.staging.garisale.com/*", zone_name = "garisale.com" }
+  ]
+
+  kv_namespaces = [
+    { binding = "DOMAIN_CACHE", id = "KV_NAMESPACE_ID_STAGING" }
+  ]
+
+  [env.staging.vars]
+    VERCEL_APP_URL = "https://dealer.staging.garisale.com"
