@@ -78,6 +78,7 @@ jobs:
 
       - name: Deploy marketplace (Vercel production)
         run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: apps/web
 
       - name: Deploy admin panel (Vercel production)
         run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes

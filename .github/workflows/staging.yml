@@ -55,6 +55,7 @@ jobs:
 
       - name: Deploy marketplace to Vercel (staging)
         run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }} --yes
+        working-directory: apps/web
 
       - name: Deploy admin panel to Vercel (staging)
         run: vercel deploy --env staging --token ${{ secrets.VERCEL_TOKEN }} --yes
