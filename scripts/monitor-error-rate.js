@@ -33,30 +33,33 @@ function performCheck() {
   checkCount++;
   console.log(`Checking health (${checkCount}/${totalChecks})...`);
   
+  let resolved = false;
+  const resolve = (failed) => {
+    if (resolved) return;
+    resolved = true;
+    if (failed) failedChecks++;
+    next();
+  };
+  
   const req = client.get(prodUrl, { timeout: 5000, rejectUnauthorized: false }, (res) => {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       console.warn(`⚠️ Unhealthy response: ${res.statusCode}`);
-      failedChecks++;
+      resolve(true);
     } else {
       console.log(`✅ Production status: ${res.statusCode}`);
+      resolve(false);
     }
-    
-    next();
   });
   
   req.on('error', (err) => {
     console.warn(`⚠️ Connection error: ${err.message}`);
-    if (isCi) {
-      failedChecks++;
-    }
-    next();
+    resolve(isCi);
   });
   
   req.on('timeout', () => {
     req.destroy();
     console.warn(`⚠️ Timeout during check`);
-    failedChecks++;
-    next();
+    resolve(true);
   });
 }
 
@@ -78,4 +81,5 @@ function next() {
   }
 }
 
-performCheck();
+console.log(`Waiting 45 seconds for DNS propagation and server boot...`);
+setTimeout(performCheck, 45000);

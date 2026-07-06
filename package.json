@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "npm --prefix apps/api run build",
+    "start": "npm run start:prod",
     "start:prod": "npm --prefix apps/api run start:prod",
     "start:worker:main": "npm --prefix apps/api run start:worker:main",
     "start:worker:automation": "npm --prefix apps/api run start:worker:automation",
