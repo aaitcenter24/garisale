@@ -986,7 +986,11 @@ BEGIN
 END
 $$;
 
-GRANT CONNECT ON DATABASE garisale TO app_user;
+DO $$
+BEGIN
+  EXECUTE 'GRANT CONNECT ON DATABASE ' || quote_ident(current_database()) || ' TO app_user;';
+END
+$$;
 GRANT USAGE ON SCHEMA public TO app_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
