@@ -14,7 +14,7 @@ export default {
     // 0. Exclude system subdomains from routing logic by fetching targets directly
     if (host === 'api.garisale.com') {
       const target = new URL(request.url);
-      target.hostname = 'api-production-dfa08.up.railway.app';
+      target.hostname = 'api-production-a231.up.railway.app';
       target.port = '';
       return fetch(new Request(target.toString(), request));
     }
