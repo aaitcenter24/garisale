@@ -64,7 +64,7 @@ jobs:
       - name: Deploy to Railway (production)
         run: |
           railway up --service "api" --detach
-          railway up --service "main-worker" --detach
+          railway up --service "main-work" --detach
           railway up --service "automation-worker" --detach
           railway up --service "notification-worker" --detach
           railway up --service "analytics-worker" --detach

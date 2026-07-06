@@ -40,12 +40,12 @@ jobs:
 
       - name: Deploy to Railway (staging)
         run: |
-          railway up --service "api-staging" --detach
-          railway up --service "main-worker-staging" --detach
-          railway up --service "automation-worker-staging" --detach
-          railway up --service "notification-worker-staging" --detach
-          railway up --service "analytics-worker-staging" --detach
-          railway up --service "feed-worker-staging" --detach
+          railway up --service "api" --detach
+          railway up --service "main-worker" --detach
+          railway up --service "automation-worker" --detach
+          railway up --service "notification-worker" --detach
+          railway up --service "analytics-worker" --detach
+          railway up --service "feed-worker" --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
