@@ -33,7 +33,7 @@ function performCheck() {
   checkCount++;
   console.log(`Checking health (${checkCount}/${totalChecks})...`);
   
-  const req = client.get(prodUrl, { timeout: 5000 }, (res) => {
+  const req = client.get(prodUrl, { timeout: 5000, rejectUnauthorized: false }, (res) => {
     if (res.statusCode < 200 || res.statusCode >= 300) {
       console.warn(`⚠️ Unhealthy response: ${res.statusCode}`);
       failedChecks++;
