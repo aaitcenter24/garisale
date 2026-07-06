@@ -118,4 +118,4 @@ jobs:
         run: |
           echo "Deployment failed. Rolling back..."
           # Vercel: automatic rollback via Vercel dashboard or CLI
-          vercel rollback --prod --token ${{ secrets.VERCEL_TOKEN }}
+          vercel rollback --token ${{ secrets.VERCEL_TOKEN }}

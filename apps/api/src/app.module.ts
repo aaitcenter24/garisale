@@ -19,8 +19,10 @@ import { DomainModule } from './modules/domain/domain.module';
 import { ImvModule } from './modules/imv/imv.module';
 import { MaestroModule } from './modules/maestro/maestro.module';
 import { SecurityHeadersMiddleware, RateLimiterMiddleware } from './common/middleware/security.middleware';
+import { AppController } from './app.controller';
 
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
