@@ -77,10 +77,10 @@ jobs:
         run: npm i -g vercel
 
       - name: Deploy marketplace (Vercel production)
-        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
 
       - name: Deploy admin panel (Vercel production)
-        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         working-directory: apps/admin
 
       - name: Deploy Cloudflare Worker (Production)
