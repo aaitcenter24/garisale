@@ -11,6 +11,16 @@ export default {
     const host = request.headers.get('Host') || '';
     const pathname = url.pathname;
 
+    // 0. Exclude system subdomains from routing logic
+    if (
+      host === 'api.garisale.com' ||
+      host === 'staging.api.garisale.com' ||
+      host === 'admin.garisale.com' ||
+      host === 'www.garisale.com'
+    ) {
+      return fetch(request);
+    }
+
     // 1. Determine if this is a custom domain or subdomain request
     const isSubdomain = host.endsWith('.garisale.com');
     const isCustomDomain = !isSubdomain && host !== 'garisale.com';
