@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run type-check  # tsc --noEmit across all packages
       - run: npm run lint        # ESLint + Prettier check
       - run: npm run check:imports  # check no circular dependencies
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm install
       - name: Run unit tests with coverage
         run: npm run test:unit -- --coverage --coverageReporters=json-summary
       - name: Check coverage thresholds
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '20', cache: 'npm' }
-      - run: npm ci
+      - run: npm install
       - name: Run Prisma migrations on test DB
         run: npm run db:migrate:test
         env:
@@ -134,7 +134,7 @@ jobs:
     if: contains(github.event.pull_request.files, 'prisma/migrations')
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci
+      - run: npm install
       - name: Check migration is backwards-compatible
         run: node scripts/check-migration-safety.js
       - name: Require 2 reviewers for schema changes
