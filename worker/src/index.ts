@@ -16,14 +16,32 @@ export default {
       const target = new URL(request.url);
       target.hostname = 'api-production-a231.up.railway.app';
       target.port = '';
-      return fetch(new Request(target.toString(), request));
+      
+      const headers = new Headers(request.headers);
+      headers.set('host', 'api-production-a231.up.railway.app');
+      
+      return fetch(target.toString(), {
+        method: request.method,
+        headers: headers,
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+        redirect: 'follow'
+      });
     }
 
     if (host === 'staging.api.garisale.com') {
       const target = new URL(request.url);
       target.hostname = 'api-production-2479.up.railway.app';
       target.port = '';
-      return fetch(new Request(target.toString(), request));
+      
+      const headers = new Headers(request.headers);
+      headers.set('host', 'api-production-2479.up.railway.app');
+      
+      return fetch(target.toString(), {
+        method: request.method,
+        headers: headers,
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+        redirect: 'follow'
+      });
     }
 
     if (host === 'admin.garisale.com' || host === 'www.garisale.com') {

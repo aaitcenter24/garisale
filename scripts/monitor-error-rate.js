@@ -42,6 +42,7 @@ function performCheck() {
   };
   
   const req = client.get(prodUrl, { timeout: 5000, rejectUnauthorized: false }, (res) => {
+    res.resume();
     if (res.statusCode < 200 || res.statusCode >= 300) {
       console.warn(`⚠️ Unhealthy response: ${res.statusCode}`);
       resolve(true);
