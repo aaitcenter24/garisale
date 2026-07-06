@@ -102,6 +102,7 @@ jobs:
 
       - name: Notify Slack — Production Deploy Success
         if: success()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
