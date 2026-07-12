@@ -17,6 +17,8 @@ export interface Dealership {
   website_url?: string;
   address?: string;
   bio?: string;
+  district?: string;
+  division?: string;
   social_media?: {
     facebook?: string;
     youtube?: string;
