@@ -1,4 +1,10 @@
 import React from 'react';
+import './globals.css';
+
+export const metadata = {
+  title: 'Garisale Dealer OS',
+  description: 'Dealer Operations Dashboard and Control Hub.',
+};
 
 export default function RootLayout({
   children,
@@ -7,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
