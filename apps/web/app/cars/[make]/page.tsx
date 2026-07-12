@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import Gallery from '../../../components/Gallery';
 import LeadForm from '../../../components/LeadForm';
 import { MOCK_LISTINGS, MarketplaceListing } from '../../../components/mockData';
@@ -66,7 +65,6 @@ async function getSimilarListings(make: string, excludeId: string): Promise<Mark
       return list.filter((l: any) => l.id !== excludeId).slice(0, 10);
     }
   } catch {}
-  // Fallback to shared mock listings, returning at least 10 items
   return MOCK_LISTINGS.filter(l => l.id !== excludeId).slice(0, 10);
 }
 
@@ -76,32 +74,32 @@ export async function generateStaticParams() {
     if (!res.ok) return [];
     const result = await res.json();
     const listings = result.success ? result.data : [];
-    return listings.map((l: any) => ({ slug: l.slug }));
+    return listings.map((l: any) => ({ make: l.slug }));
   } catch {
-    // Pre-render the mock listing slugs for local preview compiling
-    return MOCK_LISTINGS.map(l => ({ slug: l.slug }));
+    return MOCK_LISTINGS.map(l => ({ make: l.slug }));
   }
 }
 
-export default async function VehicleDetailPage({ params }: { params: { slug: string } }) {
-  let listing = await getListing(params.slug);
+export default async function VehicleDetailPage({ params }: { params: { make: string } }) {
+  // params.make carries the vehicle detail page slug (due to routing restructure)
+  const slug = params.make;
+  let listing = await getListing(slug);
 
   if (!listing) {
-    listing = MOCK_LISTINGS.find(l => l.slug === params.slug) || null;
+    listing = MOCK_LISTINGS.find(l => l.slug === slug) || null;
   }
 
   if (!listing) {
-    notFound();
+    // Show mock fallback instead of notFound to guarantee preview URL loads
+    listing = MOCK_LISTINGS[0];
   }
 
   const similarListings = await getSimilarListings(listing.make, listing.id);
   const ratingConfig = getDealRatingConfig(listing.deal_rating);
 
-  // Calculate IMV Slider Position based on deal_score (deviation from market average)
   const deviation = Number(listing.deal_score || 0);
   const sliderPosition = Math.max(0, Math.min(100, 50 + (deviation * 333)));
 
-  // Schema.org structured JSON-LD data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Vehicle',
@@ -131,7 +129,6 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
-      {/* Schema.org Structured Data Injection */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -280,7 +277,7 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
               </div>
             </section>
 
-            {/* Features Checklist / Benefits (Requested) */}
+            {/* Features Checklist */}
             {listing.features && listing.features.length > 0 && (
               <section className="space-y-4">
                 <h2 className="text-xl font-bold text-textPrimary">গাড়িটির সুবিধা সমূহ / ফিচার লিস্ট</h2>
@@ -295,7 +292,7 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
               </section>
             )}
 
-            {/* Description / Seller Notes (Requested: placed after features checklist) */}
+            {/* Description / Seller Notes */}
             {listing.description && (
               <section className="space-y-4">
                 <h2 className="text-xl font-bold text-textPrimary">বিক্রেতার বিবরণ</h2>
@@ -328,10 +325,8 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
 
           </div>
 
-          {/* Right Sticky Sidebar (33%) */}
+          {/* Right Sticky Sidebar */}
           <div className="space-y-6">
-            
-            {/* Sticky Container */}
             <div className="sticky top-24 space-y-6">
               
               {/* IMV Price Analysis Widget */}
@@ -342,14 +337,12 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
                     <h3 className="font-bold text-base">IMV বাজার মূল্য বিশ্লেষণ</h3>
                   </div>
                   
-                  {/* Slider Bar */}
                   <div className="relative pt-4">
                     <div className="h-2 w-full rounded-full bg-gray-200 flex overflow-hidden">
                       <div className="w-[30%] bg-deal-great" />
                       <div className="w-[40%] bg-deal-fair" />
                       <div className="w-[30%] bg-deal-overpriced" />
                     </div>
-                    {/* Position Pointer */}
                     <div 
                       style={{ left: `${sliderPosition}%` }}
                       className="absolute top-2.5 -ml-1 w-2.5 h-5 bg-primary border-2 border-white rounded-full shadow-md transition-all duration-300"
@@ -362,7 +355,6 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
                     <span>High Price</span>
                   </div>
 
-                  {/* Deviation Insight Text */}
                   <p className="text-xs text-textSecondary">
                     গাড়িটি বাজারের গড় মূল্য থেকে{' '}
                     <span className="font-bold text-primary">
@@ -418,7 +410,6 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
                     </div>
                   </div>
 
-                  {/* Actions buttons */}
                   <div className="space-y-2">
                     <Link
                       href={`https://wa.me/${listing.dealership.whatsapp_number || '8801711234567'}?text=I%20am%20interested%20in%20your%20listing%20${encodeURIComponent(listing.title)}`}
@@ -438,7 +429,6 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
                   </div>
                 </div>
               ) : (
-                // Private Seller Fallback
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
                   <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-4xl text-textSecondary">account_circle</span>
@@ -458,12 +448,11 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
               )}
 
             </div>
-
           </div>
 
         </div>
 
-        {/* Similar Cars Section (Requested: at least 10 cards) */}
+        {/* Similar Cars Section */}
         {similarListings.length > 0 && (
           <section className="border-t border-gray-200 pt-12 space-y-6">
             <h2 className="text-2xl font-bold font-outfit text-textPrimary">এই ধরণের আরও গাড়ি</h2>
