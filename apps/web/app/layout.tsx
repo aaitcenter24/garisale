@@ -26,6 +26,8 @@ export const metadata = {
   description: 'Welcome to the future of automotive sales in Bangladesh. Buy and sell premium vehicles.',
 };
 
+import Providers from '../components/providers';
+
 export default function RootLayout({
   children,
 }: {
@@ -44,7 +46,9 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background text-textPrimary font-sans">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
