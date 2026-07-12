@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import Gallery from '../../../components/Gallery';
 import LeadForm from '../../../components/LeadForm';
 
@@ -75,6 +74,64 @@ function getDealRatingConfig(rating: MarketplaceListing['deal_rating']) {
   }
 }
 
+// High-fidelity mock vehicle fallback for testing/preview when API has no entries yet
+const MOCK_LISTING: MarketplaceListing = {
+  id: 'mock-vehicle-id-12345',
+  slug: '2019-toyota-axio-dhaka-xk7p2',
+  title: 'Toyota Axio G Grade 2019 Pearl White',
+  description: 'Toyota Axio G Grade 2019 model in pristine condition. Pearl white exterior with clean beige interior. Single hand driven, well maintained, octan & hybrid driven. Dynamic suspension, soft touch AC panel, push start, HID projection headlights, reverse camera, lane assist, collision mitigation system. No accident history, all papers are up-to-date.',
+  asking_price: 1850000,
+  original_price: 1900000,
+  price_drop_flag: true,
+  deal_rating: 'great_deal',
+  deal_score: -0.09,
+  year: 2019,
+  make: 'Toyota',
+  model: 'Axio',
+  variant: 'G Grade',
+  body_type: 'Sedan',
+  engine_cc: 1500,
+  fuel_type: 'hybrid',
+  transmission: 'automatic',
+  condition: 'used',
+  mileage_km: 45000,
+  district: 'Dhaka',
+  photo_count: 5,
+  photos: [
+    {
+      id: 'photo-1',
+      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBpsmL_ZTcyRjRLkXwM2Ia3BddzCQJ6lOLxfAwInwkAvpRWUty6NSK48R38nfzjdP0iKXJ9r-4R9sQPmGz-OvUISaeD-tqFgHJpM7GJ_DjUGXzmlPghJOYfQ7EUe6_BkSloQwWnuI9maBw-UiBscmr5CAzpSrYLbLc2uAHdJjKv4TP23S1hKjwR3a5Q1TeMF0T97WlWIhXDYSRtBau_dNbs_rWlFLqndY8Mkh_lwLy_EF7WhAOaPvIOt-FH4e_H_CSRrkiHzfuzCSoi',
+      is_primary: true,
+    },
+    {
+      id: 'photo-2',
+      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPka1MBzclAOMn24NPZ2dgkndFsd6fPCq_blD2TrnM9mnRTxJgDPsTzOqVRJ85doXPILFOTt437RaTOVNb7nnqTgWJq5Z8y8ML6pNs5cUeNiPdyeFnrwu02LXF37oajriFJgxBDIbaafyDOpQI-1CPz33ctzy6TIvKeTa61wjADaRGujY2zIGSM4D1FlRAv6o94FJE6UA1R4slkMKQBbnPl1D3m7VDRFAlLfK7GLkOjLoqFIvV54ML9ki5IE5clpC70NK5RtEBjPoN',
+      is_primary: false,
+    },
+    {
+      id: 'photo-3',
+      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCxAUxM-k69IU5yfXjeiu14FSrJDyzv84Q2ScouKOQGu6MueVRZO2Y-lQqHtTIwD2GQmAD6nQVSBshANoNumAdjK43yZbtex1BgVEtwoaSh8X_tE8cIxKaDRNNnGunelyNqujF2e6wPKMzJWu6VHxeH6E0Ude9RlSXCxqfd2aJIUbTIMM1a6F0zAqQQeGJzvo6nBS9hXhw3HHCqgm8FbV7U7xyC9-K__6CHVAI3bl-BHybTn_lLWdbGVfJua_mpD1XWZSQxn-29GF8F',
+      is_primary: false,
+    },
+    {
+      id: 'photo-4',
+      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKpDWoEYFizlNCPgePCoDlowSr2Tob5a0kDrtFm0E2RZksBwl5aAjuJLD-I_7jETttg84sHdKaxjimqohU77NmFNCf6Va3nm4u2uThbYuh4EcPGzsDaxsc-tkL81lcmUyWpDvETvgWI7JS2aySGVjH8uMFFBXrVq5J7N7C2JFs2Z-zoq8uK2oUSF4kRKQlnXs3K2NIblDbguRTxWw0g-a40y85iLrO-hW3QuDfEX4W47UnwLOad77pHw5YIREPWX4gOm15ds50qCay',
+      is_primary: false,
+    },
+  ],
+  dealership: {
+    id: 'mock-dealer-id',
+    business_name: 'Dhaka Premium Motors',
+    slug: 'dhaka-premium-motors',
+    logo_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA6jd0uenEKgpikr-xJyUQUpeW8wpnarwZNAzFFYSG0ckrUZNFeGSqZ9Q_oozanHDtVLvmmhTI9Vk-6K6Dqmifa55SRG65M-usTWvM2Z41s4v7SGXxwQw4qqb2A_f2wsiLDoSJI5YBd9SAwlGy-Fr_86Ttu4g09HGkzzzx3sQyThkXuhW-Ue7CS2dqGoOA-fd4IdSdF8dZX65R9dYH243RziZYf7awl8GcyKrKBdd3Ti0Tzj_34_2g6Q6X3hJPTFKUeORpDYupavcy8',
+    rating: 4.8,
+    review_count: 36,
+    created_at: '2018-06-15T00:00:00Z',
+    phone: '01611-613952',
+    whatsapp_number: '8801611613952',
+  }
+};
+
 // Fetch single listing by slug from API
 async function getListing(slug: string): Promise<MarketplaceListing | null> {
   const apiUrl = `https://api.garisale.com/api/v1/public/marketplace/listings/${slug}`;
@@ -124,19 +181,16 @@ export async function generateStaticParams() {
 }
 
 export default async function VehicleDetailPage({ params }: { params: { slug: string } }) {
-  const listing = await getListing(params.slug);
-
+  // Fetch from API, fall back to high-fidelity mock listing for demo/testing
+  let listing = await getListing(params.slug);
   if (!listing) {
-    notFound();
+    listing = MOCK_LISTING;
   }
 
   const similarListings = await getSimilarListings(listing.make, listing.id);
   const ratingConfig = getDealRatingConfig(listing.deal_rating);
 
   // Calculate IMV Slider Position based on deal_score (representing deviation from market average)
-  // deviation of -0.15 (15% below average) maps to 0% (Great Deal)
-  // deviation of 0 (at average) maps to 50% (Fair Price)
-  // deviation of 0.15 (15% above average) maps to 100% (Overpriced)
   const deviation = Number(listing.deal_score || 0);
   const sliderPosition = Math.max(0, Math.min(100, 50 + (deviation * 333)));
 
