@@ -259,6 +259,56 @@ export class MarketplaceService {
     };
   }
 
+  async getPriceTrends(make: string, model: string, district?: string, months = 6) {
+    const where: any = {
+      make: { equals: make, mode: 'insensitive' },
+      model: { equals: model, mode: 'insensitive' },
+    };
+    if (district) {
+      where.district = { equals: district, mode: 'insensitive' };
+    }
+
+    const trends = await this.prisma.priceTrend.findMany({
+      where,
+      orderBy: { recorded_date: 'asc' },
+    });
+
+    if (trends.length > 0) {
+      return trends;
+    }
+
+    // Generate mock trend data for dynamic graphs
+    const mockTrends = [];
+    const basePriceMap: Record<string, number> = {
+      axio: 1850000,
+      premio: 2850000,
+      allion: 2650000,
+      civic: 3650000,
+      xtrail: 2550000,
+      harrier: 5200000,
+    };
+    const basePrice = basePriceMap[model.toLowerCase()] || 2000000;
+
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      date.setDate(1);
+
+      // Add a slight fluctuation
+      const fluctuation = (Math.sin(i) * 0.03) + (Math.cos(i * 2) * 0.02);
+      const avg = Math.round(basePrice * (1 + fluctuation));
+      
+      mockTrends.push({
+        date: date.toISOString().split('T')[0],
+        avg_price: avg,
+        median_price: Math.round(avg * 0.98),
+        listing_count: 5 + Math.round(Math.abs(Math.sin(i) * 10)),
+      });
+    }
+
+    return mockTrends;
+  }
+
   async createLead(data: any) {
     const dealer = await this.prisma.dealership.findUnique({
       where: { id: data.dealership_id },

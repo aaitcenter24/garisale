@@ -37,6 +37,17 @@ export class MarketplaceController {
     return { success: true, data };
   }
 
+  @Get('imv/trends')
+  async getPriceTrends(
+    @Query('make') make: string,
+    @Query('model') model: string,
+    @Query('district') district?: string,
+    @Query('months') months?: string,
+  ) {
+    const data = await this.marketplaceService.getPriceTrends(make, model, district, months ? Number(months) : 6);
+    return { success: true, data };
+  }
+
   @Get('c2c/imv-valuation')
   async getImvValuation(
     @Query('make') make: string,
