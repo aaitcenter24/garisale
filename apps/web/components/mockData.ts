@@ -14,6 +14,14 @@ export interface Dealership {
   created_at: string;
   phone: string;
   whatsapp_number?: string;
+  website_url?: string;
+  address?: string;
+  bio?: string;
+  social_media?: {
+    facebook?: string;
+    youtube?: string;
+    instagram?: string;
+  };
 }
 
 export interface MarketplaceListing {
@@ -85,7 +93,15 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
       phone: '01611-613952',
-      whatsapp_number: '8801611613952'
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-07-10T12:00:00Z'
   },
@@ -122,7 +138,15 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       review_count: 22,
       created_at: '2020-02-10T00:00:00Z',
       phone: '01711-223344',
-      whatsapp_number: '8801711223344'
+      whatsapp_number: '8801711223344',
+      website_url: 'https://uttaraautohub.garisale.com',
+      address: 'Sector 3, Jashimuddin Avenue, Uttara, Dhaka 1230',
+      bio: 'Uttara Auto Hub specializes in quality used vehicles and certified inspection reports. Finding you the best deals at fair pricing ranges.',
+      social_media: {
+        facebook: 'https://facebook.com/uttaraautohub',
+        youtube: 'https://youtube.com/uttaraautohub',
+        instagram: 'https://instagram.com/uttaraautohub'
+      }
     },
     created_at: '2026-07-09T10:00:00Z'
   },
@@ -157,7 +181,14 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.7,
       review_count: 15,
       created_at: '2019-11-01T00:00:00Z',
-      phone: '01819-887766'
+      phone: '01819-887766',
+      website_url: 'https://ctgautogallery.garisale.com',
+      address: 'GEC Circle, CDA Avenue, Chattogram 4000',
+      bio: 'Providing premium imported vehicles in Port City Chattogram. We feature the best Japanese hybrids and European luxury SUVs.',
+      social_media: {
+        facebook: 'https://facebook.com/ctgautogallery',
+        youtube: 'https://youtube.com/ctgautogallery'
+      }
     },
     created_at: '2026-07-08T09:00:00Z'
   },
@@ -192,7 +223,13 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.5,
       review_count: 9,
       created_at: '2021-08-20T00:00:00Z',
-      phone: '01911-334455'
+      phone: '01911-334455',
+      website_url: 'https://sylhetautoexpress.garisale.com',
+      address: 'Subhanighat Road, Sylhet 3100',
+      bio: 'Leading automobile dealership in Sylhet. Importing directly from Japanese auctions for the best transparency.',
+      social_media: {
+        facebook: 'https://facebook.com/sylhetautoexpress'
+      }
     },
     created_at: '2026-07-07T08:00:00Z'
   },
@@ -228,7 +265,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.8,
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
-      phone: '01611-613952'
+      phone: '01611-613952',
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-07-06T12:00:00Z'
   },
@@ -263,7 +309,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.6,
       review_count: 22,
       created_at: '2020-02-10T00:00:00Z',
-      phone: '01711-223344'
+      phone: '01711-223344',
+      whatsapp_number: '8801711223344',
+      website_url: 'https://uttaraautohub.garisale.com',
+      address: 'Sector 3, Jashimuddin Avenue, Uttara, Dhaka 1230',
+      bio: 'Uttara Auto Hub specializes in quality used vehicles and certified inspection reports. Finding you the best deals at fair pricing ranges.',
+      social_media: {
+        facebook: 'https://facebook.com/uttaraautohub',
+        youtube: 'https://youtube.com/uttaraautohub',
+        instagram: 'https://instagram.com/uttaraautohub'
+      }
     },
     created_at: '2026-07-05T10:00:00Z'
   },
@@ -298,7 +353,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.8,
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
-      phone: '01611-613952'
+      phone: '01611-613952',
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-07-04T12:00:00Z'
   },
@@ -333,7 +397,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.6,
       review_count: 22,
       created_at: '2020-02-10T00:00:00Z',
-      phone: '01711-223344'
+      phone: '01711-223344',
+      whatsapp_number: '8801711223344',
+      website_url: 'https://uttaraautohub.garisale.com',
+      address: 'Sector 3, Jashimuddin Avenue, Uttara, Dhaka 1230',
+      bio: 'Uttara Auto Hub specializes in quality used vehicles and certified inspection reports. Finding you the best deals at fair pricing ranges.',
+      social_media: {
+        facebook: 'https://facebook.com/uttaraautohub',
+        youtube: 'https://youtube.com/uttaraautohub',
+        instagram: 'https://instagram.com/uttaraautohub'
+      }
     },
     created_at: '2026-07-03T10:00:00Z'
   },
@@ -369,7 +442,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.8,
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
-      phone: '01611-613952'
+      phone: '01611-613952',
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-07-02T12:00:00Z'
   },
@@ -404,7 +486,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.6,
       review_count: 22,
       created_at: '2020-02-10T00:00:00Z',
-      phone: '01711-223344'
+      phone: '01711-223344',
+      whatsapp_number: '8801711223344',
+      website_url: 'https://uttaraautohub.garisale.com',
+      address: 'Sector 3, Jashimuddin Avenue, Uttara, Dhaka 1230',
+      bio: 'Uttara Auto Hub specializes in quality used vehicles and certified inspection reports. Finding you the best deals at fair pricing ranges.',
+      social_media: {
+        facebook: 'https://facebook.com/uttaraautohub',
+        youtube: 'https://youtube.com/uttaraautohub',
+        instagram: 'https://instagram.com/uttaraautohub'
+      }
     },
     created_at: '2026-07-01T10:00:00Z'
   },
@@ -439,7 +530,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.8,
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
-      phone: '01611-613952'
+      phone: '01611-613952',
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-06-30T12:00:00Z'
   },
@@ -475,7 +575,16 @@ export const MOCK_LISTINGS: MarketplaceListing[] = [
       rating: 4.8,
       review_count: 36,
       created_at: '2018-06-15T00:00:00Z',
-      phone: '01611-613952'
+      phone: '01611-613952',
+      whatsapp_number: '8801611613952',
+      website_url: 'https://dhakapremium.garisale.com',
+      address: 'House 14, Road 11, Banani, Dhaka 1213',
+      bio: 'Dhaka Premium Motors is the premier hub for imported reconditioned SUVs and Japanese sedans. Committed to providing premium customer service and certified quality assurance.',
+      social_media: {
+        facebook: 'https://facebook.com/dhakapremiummotors',
+        youtube: 'https://youtube.com/dhakapremiummotors',
+        instagram: 'https://instagram.com/dhakapremiummotors'
+      }
     },
     created_at: '2026-06-29T12:00:00Z'
   }
