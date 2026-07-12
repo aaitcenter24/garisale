@@ -1,0 +1,424 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Outfit:wght@600;700&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-surface": "#151c27",
+                        "secondary-fixed": "#7ffc97",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#784b00",
+                        "on-background": "#151c27",
+                        "primary-container": "#2563eb",
+                        "surface-container-highest": "#dce2f3",
+                        "outline": "#737686",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9ff",
+                        "secondary-container": "#7cf994",
+                        "on-secondary-container": "#007230",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2a313d",
+                        "outline-variant": "#c3c6d7",
+                        "secondary": "#006e2d",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "inverse-on-surface": "#ebf1ff",
+                        "on-primary-container": "#eeefff",
+                        "surface-variant": "#dce2f3",
+                        "on-surface-variant": "#434655",
+                        "background": "#f9f9ff",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#e7eefe",
+                        "surface-tint": "#0053db",
+                        "surface-bright": "#f9f9ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-fixed": "#002109",
+                        "surface-dim": "#d3daea",
+                        "primary": "#004ac6",
+                        "inverse-primary": "#b4c5ff",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#996100",
+                        "secondary-fixed-dim": "#62df7d",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-container-low": "#f0f3ff",
+                        "on-tertiary-container": "#ffeedd",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-high": "#e2e8f8",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#005320"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "section-padding": "80px",
+                        "stack-md": "16px",
+                        "margin-mobile": "16px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Outfit"],
+                        "headline-lg": ["Outfit"],
+                        "headline-sm": ["Outfit"],
+                        "price-display": ["Outfit"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Outfit"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "price-display": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-background font-body-md min-h-screen pb-20">
+<!-- Top Navigation (Mobile Version) -->
+<header class="bg-surface border-b border-outline-variant shadow-sm w-full sticky top-0 z-40">
+<div class="flex justify-between items-center w-full px-margin-mobile h-16"><div class="flex items-center gap-1">
+  <span class="font-headline-md text-primary font-bold tracking-tight">গাড়িসেল</span>
+  <span class="font-headline-md text-primary font-bold tracking-tight">GariSale</span>
+</div>
+<div class="flex items-center gap-4">
+  <button class="flex items-center justify-center text-on-surface-variant">
+    <span class="material-symbols-outlined">language</span>
+  </button>
+  <button class="flex items-center justify-center text-on-surface-variant">
+    <span class="material-symbols-outlined">account_circle</span>
+  </button>
+</div></div>
+</header>
+<!-- Main Content -->
+<main class="w-full max-w-[390px] mx-auto overflow-x-hidden"><section class="bg-surface-container-low px-margin-mobile py-stack-md border-b border-outline-variant"><!-- Condition Tabs -->
+<div class="flex gap-3 mb-4 justify-center w-full"><div class="flex-1 p-1 bg-surface-container-high rounded-xl flex gap-1">
+  <button class="flex-1 py-3 px-2 rounded-lg bg-surface-container-lowest shadow-sm text-primary font-bold text-body-sm transition-all duration-300 flex flex-col items-center justify-center gap-1 min-h-[48px]">
+    <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &quot;FILL&quot; 1;">done_all</span>
+    <span class="text-label-md">All condition</span>
+  </button>
+  <button class="flex-1 py-3 px-2 rounded-lg text-on-surface-variant font-semibold text-body-sm transition-all duration-300 hover:bg-surface-container-lowest/50 flex flex-col items-center justify-center gap-1 min-h-[48px]">
+    <span class="material-symbols-outlined text-[20px]">new_releases</span>
+    <span class="text-label-md">New</span>
+  </button>
+  <button class="flex-1 py-3 px-2 rounded-lg text-on-surface-variant font-semibold text-body-sm transition-all duration-300 hover:bg-surface-container-lowest/50 flex flex-col items-center justify-center gap-1 min-h-[48px]">
+    <span class="material-symbols-outlined text-[20px]">history</span>
+    <span class="text-label-md">Used</span>
+  </button>
+</div></div>
+<!-- Search Fields Grid -->
+<div class="grid grid-cols-2 gap-3">
+<div class="flex flex-col gap-1">
+<label class="text-[12px] font-semibold text-on-surface-variant">Make</label>
+<button class="bg-surface border border-outline-variant rounded-lg px-3 h-12 flex items-center justify-between w-full">
+<span class="text-sm">Toyota</span>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[12px] font-semibold text-on-surface-variant">Model</label>
+<button class="bg-surface border border-outline-variant rounded-lg px-3 h-12 flex items-center justify-between w-full">
+<span class="text-sm text-outline">Select Model</span>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[12px] font-semibold text-on-surface-variant">Year</label>
+<button class="bg-surface border border-outline-variant rounded-lg px-3 h-12 flex items-center justify-between w-full">
+<span class="text-sm text-outline">Select Year</span>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-[12px] font-semibold text-on-surface-variant">Price</label>
+<button class="bg-surface border border-outline-variant rounded-lg px-3 h-12 flex items-center justify-between w-full">
+<span class="text-sm text-outline">Max Price</span>
+<span class="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+</button>
+</div>
+</div>
+<!-- Search Button -->
+<button class="w-full mt-4 bg-primary text-white rounded-lg h-12 flex items-center justify-center gap-2 font-headline-sm">
+<span class="">গাড়ি খুঁজুন</span>
+<span class="material-symbols-outlined">search</span>
+</button></section>
+<!-- Top Banners -->
+<!-- Filter Chips -->
+<!-- Brand Quick Links -->
+<section class="px-margin-mobile pb-stack-md flex gap-3 overflow-x-auto hide-scrollbar"><div class="flex-shrink-0 w-20 flex flex-col items-center gap-1">
+<div class="w-14 h-14 bg-surface border border-outline-variant rounded-xl flex items-center justify-center">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">directions_car</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Sedan</span>
+</div>
+<div class="flex-shrink-0 w-20 flex flex-col items-center gap-1">
+<div class="w-14 h-14 bg-surface border border-outline-variant rounded-xl flex items-center justify-center">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">airport_shuttle</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">SUV</span>
+</div>
+<div class="flex-shrink-0 w-20 flex flex-col items-center gap-1">
+<div class="w-14 h-14 bg-surface border border-outline-variant rounded-xl flex items-center justify-center">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">commute</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Microbus</span>
+</div>
+<div class="flex-shrink-0 w-20 flex flex-col items-center gap-1"><div class="w-14 h-14 bg-surface border border-outline-variant rounded-xl flex items-center justify-center">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">airport_shuttle</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Crossover</span></div>
+<div class="flex-shrink-0 w-20 flex flex-col items-center gap-1">
+<div class="w-14 h-14 bg-surface border border-outline-variant rounded-xl flex items-center justify-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-outline-variant">more_horiz</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Others</span>
+</div></section>
+<!-- Dropdown Filters Stacked -->
+<!-- Results Header -->
+<section class="px-margin-mobile py-2 flex justify-between items-center border-t border-outline-variant bg-surface">
+<span class="font-headline-sm text-headline-sm text-on-surface">Found 12,201 ads</span>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 border border-outline-variant rounded-lg px-3 py-1.5 bg-surface">
+<span class="material-symbols-outlined text-sm">sort</span>
+<span class="font-body-sm text-body-sm">Sort</span>
+<span class="material-symbols-outlined text-sm">arrow_drop_down</span>
+</button>
+<div class="flex bg-surface-container-high rounded-lg p-1 gap-1">
+  <button class="flex items-center justify-center w-8 h-8 rounded bg-primary text-white shadow-sm">
+    <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: &quot;FILL&quot; 1;">grid_view</span>
+  </button>
+  <button class="flex items-center justify-center w-8 h-8 rounded text-on-surface-variant hover:bg-surface-container-lowest/50 transition-all">
+    <span class="material-symbols-outlined text-[20px]">view_list</span>
+  </button>
+</div>
+</div>
+</section>
+<!-- Listings Grid (2 Column for Mobile) -->
+<section class="px-margin-mobile py-stack-md grid grid-cols-2 gap-3 bg-surface-container-lowest">
+<!-- Card 1 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+<div class="relative aspect-[4/3] w-full">
+<img class="w-full h-full object-cover" data-alt="A silver Toyota Allion 2006 parked on a grassy field in front of a building during daytime. The image shows the front of the car clearly. The lighting is natural and bright." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn0yvhm8IlGp8kArB2kVpt0PzbE8W1m3B-0LVoedZZixXXRS0plV-wkIfjO_F4vqiJZnP3dG2n_fiAnm2iO9Bq0d9jp2q6P5P_Qpg1E38zrtEJoVeSCpHWx2GgFxrzW5YYW6M_-bsPAWBZcqKjyOv6b7-I3rO2L5_bg6QmOec5KMut_NyH5Z0cjXhSSLAYopgrGpka89dqwgJXyTtN1TcYDzTY06DkxIGaxZmgcNEeRJ15o6AiKDNn4KdbCowZHME4Xa2TjvI8x8wB">
+<div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[12px] text-yellow-400" style="font-variation-settings: &quot;FILL&quot; 1;">star</span> ENTERPRISE
+                    </div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<span class="font-price-display text-[16px] text-green-price leading-tight">BDT 15,80,000</span>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Toyota Allion 2006 Pearl</h3>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Shyamoli • Local Used</p>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">AMT • 79000 km</p>
+<div class="flex items-center gap-1 mt-1">
+<div class="bg-surface-container-highest rounded px-1.5 py-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant">local_fire_department</span>
+<span class="text-[10px] text-on-surface-variant">Popular</span>
+</div>
+</div>
+<div class="flex items-center gap-1 mt-2">
+<div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-white">person</span>
+</div>
+<span class="text-[10px] text-on-surface-variant truncate">Dhaka Car Center</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+<div class="relative aspect-[4/3] w-full">
+<img class="w-full h-full object-cover" data-alt="A silver Toyota Premio 1.5 FWD 2006 parked outside on a cloudy day. The image shows the front view of the vehicle. The lighting is diffused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD84SDNuRP88pkxq4_4f3kCV4gIv9nVEzoLixs3MAtUPhrc5O0XtZV3XTTjee9UJvjdKFHtESHFF-cq5-yly9cjldsif-a9Bs28KI0Yf5jkWbBtvCBxfmHj2_9V-DXtbxM_6GpfQw58KCUxjGSBa-ZN_UDwfKxfcTeX-6h5KgpX1WUQtD6b_5vmPhAVQ7qi9nRtn8UsS8AwwO3CsLEeX-wpv2PYTo4qOQBWU_B37F9FhowQcwCUgqGCKPSW0CZcHtAr8_6xq-Xo9EWN">
+<div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[12px] text-yellow-400" style="font-variation-settings: &quot;FILL&quot; 1;">star</span> ENTERPRISE
+                    </div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<span class="font-price-display text-[16px] text-green-price leading-tight">BDT 14,90,000</span>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Toyota Premio 1.5 FWD 2006 Silver</h3>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Shyamoli • Local Used</p>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">AMT • 84000 km</p>
+<div class="flex items-center gap-1 mt-2">
+<div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-white">person</span>
+</div>
+<span class="text-[10px] text-on-surface-variant truncate">Dhaka Car Center</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm col-span-2">
+<div class="flex h-32">
+<div class="relative w-2/5 h-full">
+<img class="w-full h-full object-cover" data-alt="A maroon Toyota Avanza 2011 parked on a paved street. The image captures the side profile of the car. The environment suggests an urban setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGQFnZh-mg3Oy9_oujYUKydGCftOKq0dkVsH826jWLPKFc3vDaEEfFKQrUv3lzUWAMIuJ6TO4NPc9gN8Vop_Qpj4Q9IgezmIEbNNnOnaOQGAdKLeqOHYekJUC3omaiveo9GaikGm1TVjo_g64muK3FGHNLXkhpnY5Ky66N0HOrhd1_9H6qbz3fiNWdeMg0Xp3LSpr7vCbMVoXwslnHVf6UFHZGsgxC7DXXlM733YCMqEYp-BJM-EAZFfUf_4UJG6K8NrbYEXmrJwwp">
+<div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[12px] text-blue-400" style="font-variation-settings: &quot;FILL&quot; 1;">diamond</span> DIAMOND
+                        </div>
+</div>
+<div class="p-3 w-3/5 flex flex-col justify-center gap-1 bg-surface-container-lowest">
+<span class="font-price-display text-[16px] text-green-price leading-tight">BDT 13,35,000</span>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Toyota Avanza 2011 Maroon</h3>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Baridhara • Local Used</p>
+<p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Automatic • 65000 km</p>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+  <div class="relative aspect-[4/3] w-full">
+    <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Toyota Corolla 2021 Black">
+    <div class="absolute top-2 left-2 bg-green-500 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+      Great Deal
+    </div>
+  </div>
+  <div class="p-3 flex flex-col gap-1">
+    <span class="font-price-display text-[16px] text-green-price leading-tight">BDT 33,80,000</span>
+    <h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Toyota Corolla 2021 Black</h3>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Mohammadpur • Foreign Used</p>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">CVT • 32000 km</p>
+    <div class="flex items-center gap-1 mt-2">
+      <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-[10px] text-white">person</span>
+      </div>
+      <span class="text-[10px] text-on-surface-variant truncate">Auto Japan</span>
+    </div>
+  </div>
+</div>
+<!-- Card 5 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+  <div class="relative aspect-[4/3] w-full">
+    <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1594070319944-7c0c63146b77?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Honda Civic 2019 Silver">
+    <div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+      Good Deal
+    </div>
+  </div>
+  <div class="p-3 flex flex-col gap-1">
+    <span class="font-price-display text-[16px] text-green-price leading-tight">BDT 28,50,000</span>
+    <h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Honda Civic 2019 Silver</h3>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Banani • Local Used</p>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Automatic • 45000 km</p>
+    <div class="flex items-center gap-1 mt-2">
+      <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-[10px] text-white">person</span>
+      </div>
+      <span class="text-[10px] text-on-surface-variant truncate">Premium Motors</span>
+    </div>
+  </div>
+</div>
+<!-- Card 6 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+  <div class="relative aspect-[4/3] w-full">
+    <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Mitsubishi Pajero 2010 Black">
+    <div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+      Fair Price
+    </div>
+  </div>
+  <div class="p-3 flex flex-col gap-1">
+    <span class="font-price-display text-[16px] text-green-price leading-tight">BDT 40,50,000</span>
+    <h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Mitsubishi Pajero 2010 Black</h3>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Baridhara • Local Used</p>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Automatic • 65000 km</p>
+    <div class="flex items-center gap-1 mt-2">
+      <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-[10px] text-white">person</span>
+      </div>
+      <span class="text-[10px] text-on-surface-variant truncate">Baridhara Enterprise</span>
+    </div>
+  </div>
+</div>
+<!-- Card 7 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+  <div class="relative aspect-[4/3] w-full">
+    <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Toyota Prius 2021 Pearl">
+    <div class="absolute top-2 left-2 bg-green-500 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+      Great Deal
+    </div>
+  </div>
+  <div class="p-3 flex flex-col gap-1">
+    <span class="font-price-display text-[16px] text-green-price leading-tight">BDT 36,00,000</span>
+    <h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Toyota Prius 2021 Pearl</h3>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Tejgaon • Foreign Used</p>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Automatic • 21000 km</p>
+    <div class="flex items-center gap-1 mt-2">
+      <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-[10px] text-white">person</span>
+      </div>
+      <span class="text-[10px] text-on-surface-variant truncate">Next Ride</span>
+    </div>
+  </div>
+</div>
+<!-- Card 8 -->
+<div class="bg-surface border border-outline-variant rounded-xl overflow-hidden flex flex-col shadow-sm">
+  <div class="relative aspect-[4/3] w-full">
+    <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1567818735868-e71b99932e29?auto=format&amp;fit=crop&amp;q=80&amp;w=400" alt="Nissan X-Trail 2015 White">
+    <div class="absolute top-2 left-2 bg-on-surface/70 text-white font-label-md text-[10px] px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+      Good Deal
+    </div>
+  </div>
+  <div class="p-3 flex flex-col gap-1">
+    <span class="font-price-display text-[16px] text-green-price leading-tight">BDT 19,90,000</span>
+    <h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight line-clamp-2">Nissan X-Trail 2015 White</h3>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">Dhaka, Mirpur • Local Used</p>
+    <p class="font-body-sm text-[12px] text-on-surface-variant leading-tight truncate">CVT • 74000 km</p>
+    <div class="flex items-center gap-1 mt-2">
+      <div class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+        <span class="material-symbols-outlined text-[10px] text-white">person</span>
+      </div>
+      <span class="text-[10px] text-on-surface-variant truncate">PFS Car Sales</span>
+    </div>
+  </div>
+</div></section>
+</main>
+<!-- Bottom Navigation Bar (Generated from JSON structure) -->
+<nav class="bg-surface dark:bg-surface-container-highest docked full-width bottom-0 rounded-t-xl md:hidden shadow-lg border-t border-outline-variant fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2">
+<a class="flex flex-col items-center justify-center text-primary bg-primary-container/10 rounded-xl px-3 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">bookmark_border</span>
+<span class="font-label-md text-label-md mt-1">Saved</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-md text-label-md mt-1">Sell</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">chat_bubble_outline</span>
+<span class="font-label-md text-label-md mt-1">Messages</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</nav>
+
+
+
+
+</body></html>

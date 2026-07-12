@@ -1,0 +1,546 @@
+<!DOCTYPE html><html lang="bn" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#eeefff",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-surface": "#151c27",
+                    "surface-container": "#e7eefe",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "secondary-fixed": "#7ffc97",
+                    "surface-variant": "#dce2f3",
+                    "primary-container": "#2563eb",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "inverse-surface": "#2a313d",
+                    "on-surface-variant": "#434655",
+                    "surface-container-highest": "#dce2f3",
+                    "secondary-fixed-dim": "#62df7d",
+                    "on-primary-fixed": "#00174b",
+                    "inverse-on-surface": "#ebf1ff",
+                    "tertiary-fixed": "#ffddb8",
+                    "surface-container-high": "#e2e8f8",
+                    "inverse-primary": "#b4c5ff",
+                    "on-secondary-fixed-variant": "#005320",
+                    "secondary": "#16A34A",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error": "#ffffff",
+                    "tertiary-container": "#996100",
+                    "surface-dim": "#d3daea",
+                    "on-secondary-fixed": "#002109",
+                    "background": "#f9f9ff",
+                    "outline": "#737686",
+                    "tertiary": "#784b00",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#7cf994",
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "on-tertiary-container": "#ffeedd",
+                    "on-background": "#151c27",
+                    "surface-tint": "#0053db",
+                    "surface": "#f9f9ff",
+                    "surface-container-low": "#f0f3ff",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#2a1700",
+                    "primary": "#2563eb",
+                    "on-secondary-container": "#007230"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.8rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "stack-md": "16px",
+                    "container-max": "1280px",
+                    "section-padding": "80px",
+                    "margin-mobile": "16px",
+                    "stack-lg": "32px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Outfit"],
+                    "display-lg": ["Outfit"],
+                    "price-display": ["Outfit"],
+                    "headline-lg": ["Outfit"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Outfit"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "price-display": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-surface font-body-md">
+<!-- Top AppBar (from Shared Components JSON) -->
+<header class="bg-surface dark:bg-surface-container-low shadow-sm docked full-width top-0 sticky z-50">
+<div class="flex items-center justify-between px-margin-mobile md:px-gutter w-full max-w-container-max mx-auto h-16">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 duration-150" data-original-icon="arrow_back">arrow_back</span>
+<span class="font-display-lg text-headline-sm md:text-display-lg text-primary font-bold">GariSale</span>
+</div>
+<div class="hidden md:flex gap-gutter">
+<nav class="flex gap-6 items-center">
+<a href="#" class="text-primary font-semibold font-label-md text-label-md">Inventory</a>
+<a href="#" class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-2 py-1 rounded-lg">Sell Your Car</a>
+<a href="#" class="text-on-surface-variant hover:bg-surface-container-high transition-colors px-2 py-1 rounded-lg">Dealer Locator</a>
+</nav>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md active:scale-95 duration-150">Login</button>
+</div>
+<div class="md:hidden">
+<span class="material-symbols-outlined text-on-surface-variant">menu</span>
+</div>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-gutter py-stack-md">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 mb-stack-md text-on-surface-variant font-label-md">
+<a href="#" class="hover:text-primary">Home</a>
+<span class="material-symbols-outlined text-sm" data-original-icon="chevron_right">chevron_right</span>
+<a href="#" class="hover:text-primary">গাড়ি</a>
+<span class="material-symbols-outlined text-sm" data-original-icon="chevron_right">chevron_right</span>
+<a href="#" class="hover:text-primary">Toyota</a>
+<span class="material-symbols-outlined text-sm" data-original-icon="chevron_right">chevron_right</span>
+<a href="#" class="hover:text-primary">Axio</a>
+<span class="material-symbols-outlined text-sm" data-original-icon="chevron_right">chevron_right</span>
+<span class="text-on-surface font-semibold">টোকিও Axio 2019</span>
+</nav>
+<!-- Top Area: Headline & Price -->
+<div class="flex flex-col md:flex-row justify-between items-start mb-stack-lg gap-gutter">
+<div class="w-full md:w-[65%]">
+<h1 class="font-headline-lg text-headline-lg mb-2">Toyota Axio G Grade 2019 Pearl White</h1>
+<div class="flex flex-wrap items-center gap-stack-md">
+<span class="text-secondary font-price-display text-price-display">BDT ১৪,৫০,০০০</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full font-label-md">Negotiable</span>
+<div class="flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full imv-badge-glow">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">verified</span>
+<span class="font-label-md">Great Deal</span>
+</div>
+</div>
+</div>
+<div class="hidden md:flex gap-stack-md">
+<button class="p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-all"><span class="material-symbols-outlined">print</span></button>
+<button class="p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-all"><span class="material-symbols-outlined">favorite</span></button>
+<button class="p-3 bg-surface-container rounded-lg hover:bg-surface-container-high transition-all"><span class="material-symbols-outlined">share</span></button>
+</div>
+</div>
+<!-- 2-Column Layout -->
+<div class="flex flex-col md:flex-row gap-gutter">
+<!-- Left Column (65%) -->
+<div class="w-full md:w-[65%] space-y-stack-lg">
+<!-- Photo Gallery -->
+<div class="relative group">
+<div class="absolute top-4 left-0 z-10 bg-primary text-white px-6 py-2 font-bold shadow-lg transform -skew-x-12">SPECIAL</div>
+<img class="w-full h-[500px] object-cover rounded-xl shadow-lg" data-alt="A pristine pearl white 2019 Toyota Axio G Grade sedan parked in a clean, professional automotive studio. High-key lighting highlights the elegant metallic paint finish and the car's streamlined silhouette. The setting is minimalist with a polished grey floor and a subtle soft-focus background, conveying a premium and trustworthy marketplace aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpsmL_ZTcyRjRLkXwM2Ia3BddzCQJ6lOLxfAwInwkAvpRWUty6NSK48R38nfzjdP0iKXJ9r-4R9sQPmGz-OvUISaeD-tqFgHJpM7GJ_DjUGXzmlPghJOYfQ7EUe6_BkSloQwWnuI9maBw-UiBscmr5CAzpSrYLbLc2uAHdJjKv4TP23S1hKjwR3a5Q1TeMF0T97WlWIhXDYSRtBau_dNbs_rWlFLqndY8Mkh_lwLy_EF7WhAOaPvIOt-FH4e_H_CSRrkiHzfuzCSoi">
+<div class="flex gap-stack-sm mt-stack-md overflow-x-auto scroll-hide">
+<img class="w-24 h-20 object-cover rounded-lg cursor-pointer hover:ring-2 ring-primary" data-alt="Close up of the front grill and LED headlights of a white Toyota Axio 2019, emphasizing modern design and high-end automotive photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPka1MBzclAOMn24NPZ2dgkndFsd6fPCq_blD2TrnM9mnRTxJgDPsTzOqVRJ85doXPILFOTt437RaTOVNb7nnqTgWJq5Z8y8ML6pNs5cUeNiPdyeFnrwu02LXF37oajriFJgxBDIbaafyDOpQI-1CPz33ctzy6TIvKeTa61wjADaRGujY2zIGSM4D1FlRAv6o94FJE6UA1R4slkMKQBbnPl1D3m7VDRFAlLfK7GLkOjLoqFIvV54ML9ki5IE5clpC70NK5RtEBjPoN">
+<img class="w-24 h-20 object-cover rounded-lg cursor-pointer hover:ring-2 ring-primary" data-alt="The spacious and clean interior of a Toyota Axio 2019 showing high-quality upholstery, dashboard, and entertainment system in natural, soft daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxAUxM-k69IU5yfXjeiu14FSrJDyzv84Q2ScouKOQGu6MueVRZO2Y-lQqHtTIwD2GQmAD6nQVSBshANoNumAdjK43yZbtex1BgVEtwoaSh8X_tE8cIxKaDRNNnGunelyNqujF2e6wPKMzJWu6VHxeH6E0Ude9RlSXCxqfd2aJIUbTIMM1a6F0zAqQQeGJzvo6nBS9hXhw3HHCqgm8FbV7U7xyC9-K__6CHVAI3bl-BHybTn_lLWdbGVfJua_mpD1XWZSQxn-29GF8F">
+<img class="w-24 h-20 object-cover rounded-lg cursor-pointer hover:ring-2 ring-primary" data-alt="Rear view of a 2019 Toyota Axio showing the elegant tail lights and sleek boot profile against a clean architectural background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKpDWoEYFizlNCPgePCoDlowSr2Tob5a0kDrtFm0E2RZksBwl5aAjuJLD-I_7jETttg84sHdKaxjimqohU77NmFNCf6Va3nm4u2uThbYuh4EcPGzsDaxsc-tkL81lcmUyWpDvETvgWI7JS2aySGVjH8uMFFBXrVq5J7N7C2JFs2Z-zoq8uK2oUSF4kRKQlnXs3K2NIblDbguRTxWw0g-a40y85iLrO-hW3QuDfEX4W47UnwLOad77pHw5YIREPWX4gOm15ds50qCay">
+<img class="w-24 h-20 object-cover rounded-lg cursor-pointer hover:ring-2 ring-primary" data-alt="Detail shot of the alloy wheels and tire of a white Toyota Axio 2019, showcasing cleanliness and maintenance quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-CcCT8eEhdWsXDAoyDD5Y1udHcNoHI4VTjdMMfHzkNLujE7PP0LnuFUOyYlAMSVaLTa8z_LeDpEnKkWXvEgtOGdjTO5NRK9Ru5833-MlWmvFYmEUMFsVYoejXg5xeeM0L5778WZ0z95pp4ocKK42HdxpaIONbWEYbHEzBZ78NRDNCLzo6WXlpgPUsz-OQjEMY0sWUjor3yDrbemdjm_NxogV8NDsz1j6pmZlfgUL7cFbs8EC-f1hSJzsdub03b7orJ0dV4vwb2ado">
+<img class="w-24 h-20 object-cover rounded-lg cursor-pointer hover:ring-2 ring-primary" data-alt="The engine bay of a Toyota Axio 2019, clean and well-maintained, photographed from a high angle in a bright showroom environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD8347pOBy4p1trmSmeGzfCt2_qSa7pSAgAf8wKWO4BIi4yW00imMkTyTQQzy-7Azw9P2BBis4dQag1LzmBJdinrypr39kAA4GCW7ka2hve3rgsLe7FDlzhfBXrQmaNrhlp0Vy9zm-vfwW2jaighdoVF3N0NNJdY6UnKy7HUPsNOBHuO5KXDsyyeXyfi9K-r1PMI8gyr7LuqNssZvgU0veHyRsiguxFvnfQWkwyD184fFtBanpZV25-NgAFdT6upQqeY6V4LhpuLua">
+</div>
+</div>
+<!-- Key Specs Row -->
+<div class="grid grid-cols-3 gap-gutter bg-surface-container-low p-6 rounded-xl">
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">speed</span>
+<span class="font-label-md text-on-surface-variant uppercase">Mileage</span>
+<span class="font-headline-sm">45,000 km</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">calendar_today</span>
+<span class="font-label-md text-on-surface-variant uppercase">MANUFACTURE YEAR</span>
+<span class="font-headline-sm">2019</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">local_gas_station</span>
+<span class="font-label-md text-on-surface-variant uppercase">Fuel Type</span>
+<span class="font-headline-sm">Hybrid</span>
+</div>
+</div>
+<!-- Specs Table -->
+<section>
+<h2 class="font-headline-md mb-stack-md">গাড়ির বিবরণ</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 bg-white p-8 rounded-xl shadow-sm border border-outline-variant/30">
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">ব্র্যান্ড</span>
+<span class="font-semibold">Toyota</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">মডেল</span>
+<span class="font-semibold">Axio</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">সংস্করণ</span>
+<span class="font-semibold">G Grade</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">বডি টাইপ</span>
+<span class="font-semibold">Sedan</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">ইঞ্জিন ক্ষমতা</span>
+<span class="font-semibold">1500 cc</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">রং</span>
+<span class="font-semibold">Pearl White</span>
+</div>
+<div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">রেজিস্ট্রেশন বছর</span>
+<span class="font-semibold">2023</span>
+</div></div>
+</section>
+<!-- Features -->
+<section>
+<h2 class="font-headline-md mb-stack-md">মূল বৈশিষ্ট্যসমূহ</h2>
+<div class="flex flex-wrap gap-stack-sm">
+<span class="px-4 py-2 bg-surface-container-high rounded-full font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span> Push Start
+                        </span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span> Reverse Camera
+                        </span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span> Soft Touch AC
+                        </span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span> Lane Assist
+                        </span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full font-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span> HID Projection
+                        </span>
+</div>
+</section>
+<!-- Seller Notes -->
+<section>
+<h2 class="font-headline-md mb-stack-md">বিক্রেতার নোট</h2>
+<div class="prose prose-on-surface max-w-none text-on-surface-variant">
+<p class="">ফ্রেশ কন্ডিশন, কোনো এক্সিডেন্ট হিস্ট্রি নেই। জেনুইন মাইলেজ এবং পেপারস সব আপ টু ডেট। শুধুমাত্র প্রকৃত ক্রেতারা যোগাযোগ করবেন। গাড়িটি দেখার জন্য আমাদের শোরুমে আমন্ত্রণ জানাচ্ছি।</p>
+</div>
+</section>
+<!-- Message to Dealer -->
+<section class="bg-white p-8 rounded-xl shadow-sm border border-outline-variant/30">
+<h2 class="font-headline-md mb-stack-md">বিক্রেতাকে মেসেজ দিন</h2>
+<form class="space-y-4">
+<div class="grid grid-cols-2 gap-stack-md">
+<input class="h-12 border-outline-variant rounded-lg focus:ring-primary focus:border-primary" placeholder="আপনার নাম" type="text">
+<input class="h-12 border-outline-variant rounded-lg focus:ring-primary focus:border-primary" placeholder="আপনার ইমেইল" type="email">
+</div>
+<textarea class="w-full border-outline-variant rounded-lg focus:ring-primary focus:border-primary" placeholder="আপনার মেসেজ..." rows="4"></textarea>
+<button class="w-full bg-primary text-white py-4 rounded-lg font-bold hover:bg-primary/90 transition-all active:scale-95" type="submit">Send Message</button>
+</form>
+</section>
+</div>
+<!-- Right Column (35%) Sticky Sidebar -->
+<aside class="w-full md:w-[35%] space-y-gutter">
+<div class="sticky top-24 space-y-gutter">
+<!-- Dealer Card -->
+<div class="bg-white p-6 rounded-xl shadow-lg border border-primary/10">
+<div class="flex items-center gap-4 mb-stack-md">
+<div class="w-16 h-16 rounded-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional profile photo of a smiling car dealer representative in a business suit, set against a blurred background of an upscale automotive showroom. The lighting is warm and inviting, emphasizing high trust and reliability in the premium marketplace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6jd0uenEKgpikr-xJyUQUpeW8wpnarwZNAzFFYSG0ckrUZNFeGSqZ9Q_oozanHDtVLvmmhTI9Vk-6K6Dqmifa55SRG65M-usTWvM2Z41s4v7SGXxwQw4qqb2A_f2wsiLDoSJI5YBd9SAwlGy-Fr_86Ttu4g09HGkzzzx3sQyThkXuhW-Ue7CS2dqGoOA-fd4IdSdF8dZX65R9dYH243RziZYf7awl8GcyKrKBdd3Ti0Tzj_34_2g6Q6X3hJPTFKUeORpDYupavcy8">
+</div>
+<div>
+<div class="flex items-center gap-1">
+<h3 class="font-headline-sm">ঢাকা অটো হাউস</h3>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: &quot;FILL&quot; 1;">verified</span>
+</div>
+<p class="text-on-surface-variant text-body-sm">Premium Dealer Since 2018</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-stack-md">
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block font-bold text-headline-sm">150+</span>
+<span class="text-xs text-on-surface-variant">Cars Sold</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg text-center">
+<span class="block font-bold text-headline-sm">4.8★</span>
+<span class="text-xs text-on-surface-variant">Rating</span>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-3 rounded-lg mb-3 flex items-center justify-center gap-2 font-bold hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined">call</span> Call Dealer
+                        </button>
+<a class="block text-center text-primary font-semibold hover:underline mb-6" href="#">View all 12 ads</a>
+<div class="flex gap-2">
+<button class="flex-1 text-on-surface-variant bg-surface-container-high py-2 rounded-lg text-xs font-semibold hover:bg-error/10 hover:text-error transition-colors">Mark Unavailable</button>
+<button class="flex-1 text-on-surface-variant bg-surface-container-high py-2 rounded-lg text-xs font-semibold hover:bg-error/10 hover:text-error transition-colors">Report</button>
+</div>
+</div>
+<!-- IMV Price Analysis Widget -->
+<div class="bg-gradient-to-br from-primary/5 to-secondary/5 p-6 rounded-xl border border-secondary/20">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary">analytics</span>
+<h3 class="font-headline-sm text-on-surface">Price Analysis</h3>
+</div>
+<div class="relative h-4 bg-surface-container rounded-full mb-2 flex">
+<div class="w-1/4 h-full bg-error rounded-l-full"></div>
+<div class="w-1/2 h-full bg-secondary"></div>
+<div class="w-1/4 h-full bg-tertiary rounded-r-full"></div>
+<div class="absolute -top-1 left-[40%] w-2 h-6 bg-primary border-2 border-white rounded-full shadow-lg"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant uppercase font-bold">
+<span class="">Low</span>
+<span class="text-secondary">Great Deal</span>
+<span class="">High</span>
+</div>
+<p class="mt-4 text-body-sm text-on-surface-variant">This price is <span class="text-secondary font-bold">BDT 45,000 lower</span> than the current market average for similar models.</p>
+</div>
+</div>
+</aside>
+</div>
+<!-- Same Category Section (Bikroy Style) -->
+<section class="mt-section-padding">
+<div class="flex justify-between items-center mb-stack-lg"><h2 class="font-headline-md text-headline-lg">একই রকম গাড়ি</h2>
+<div class="flex items-center">
+  <div class="flex items-center bg-surface-container-high p-1 rounded-lg gap-1 mr-4">
+    <button class="p-1.5 rounded-md bg-primary text-on-primary shadow-sm transition-all flex items-center justify-center" title="List View">
+      <span class="material-symbols-outlined text-[20px]">view_list</span>
+    </button>
+    <button class="p-1.5 rounded-md text-on-surface-variant hover:bg-surface-container-highest transition-all flex items-center justify-center" title="Grid View">
+      <span class="material-symbols-outlined text-[20px]">grid_view</span>
+    </button>
+  </div>
+  <a class="text-primary font-semibold hover:underline" href="#">সবগুলো দেখুন</a>
+</div></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Similar Item 1 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" data-alt="A side view of a silver 2018 Toyota Axio parked on a vibrant city street. The late afternoon sun creates dynamic reflections on the bodywork, set in a bustling urban environment with high-end boutiques in the background, matching a clean commercial photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4TTXgOVa_cBtuZu1GeRJ2gkY8NAakScnBSKssiPz4sSzgjPTH36jjtMKTfgMk7zBVFCBsApWv1ORLvMAqxR6J0NKad0XotSISVMyn71Is7ysvdFg02qinm6yKMvVG8p-3MT8f39BHtSEAKLtNg7SUr3jmNU3fwoXFXqzOLnn6vM_D31Y48G9pEddLdNArK7h3Ao_wPOxaXnSbOEdRp0dDhG4tOCv5RHWmVHrsgPU9go-vnKXR1ZFMKvwMsaSB58mZS_sAd2_0yBgE">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Toyota Axio X Grade 2018</h3>
+<p class="text-on-surface-variant text-body-sm">Dhaka, Bangladesh • 55,000 km</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ১৩,৮০,০০০</span>
+<span class="text-on-surface-variant text-xs">2 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 2 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" data-alt="Front three-quarter view of a black Toyota Axio 2019 Hybrid in a professional studio setting. The lighting is sophisticated, focusing on the chrome detailing and glossy paint, following a high-trust editorial car marketplace aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTIaNr-dPUxwj5_CTyrexkUePzWOK6TojSgpCB67VSy5VxwKNMg6asD1jVl0ApMbCfu6FWlrILHyaqgb37SJ2EPc8kCELt6NbaT5q5dIGWmT1fkcvarhZQCudCv3NdbFA6zqqXE6Yu5-XvBBg2ZC9u170cTI9j30uSXfWN1yGQW6x9eyLiNrGAvY8fvbhuE1vhr6CL4ZN7AokixaiRt1ASP_PCq_9_Kb1B1DNY71S-EQGKy8R9-U7oQgfx1LqrrHZKeIZn_v27lTVp">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Toyota Axio Hybrid 2019</h3>
+<p class="text-on-surface-variant text-body-sm">Chittagong, Bangladesh • 38,000 km</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ১৫,২৫,০০০</span>
+<span class="text-on-surface-variant text-xs">5 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 3 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJKaQcXzKRhohm0SQkabI8ydkpR3xZgDpEmk7HulLaHSnW8dBgO8-yTRvKh3O0inkcuz7A6DcpPmq327er79luMmuSh4NGvNmvdftX8eUUlWbTrztyL1gk52sqELksM-Nb-3neAnVRsY9b9TNDxw_zg-wZWdGW3pcDljb1QSyGbMchRc9HZoUAOgebOQpYUBegGafCrmcs5uzpgdVtLuiZwpAcK_WVHHFkLa-5rlmt8l-R9ljw2ml0giKRfXW4HK3YzLAsTwrS-ZKo" alt="Toyota Noah Hybrid G 2017">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Toyota Noah Hybrid G 2017</h3>
+<p class="text-on-surface-variant text-body-sm">Dhaka, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ২৮,৫০,০০০</span>
+<span class="text-on-surface-variant text-xs">4 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 4 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4vJY8sT6s-z4cQHznLp4HHIfXAVEzH5OHVpIUTuezBxGEPn-E8fuKhJKhaqEvyu_fMzjrnr0f4ldM6w74rAn57lgk1VzwL3RWysDhjVtiHRwlurkZnNkQylnSNLS2are35RwfHlTTaOWOhFrK3TRCFH3fVsTEGB3LsIHxKziAcB06TPxIxPIePBBo2zkv3Th1-7lG4A-_m3y84wZZqIj6zNLPd37Kpu0stnV5W0U7qFVphZtYa3jqBeYJFwCUON6YU4XioBeXEIpZ" alt="Mitsubishi Pajero Sport 2015">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Mitsubishi Pajero Sport 2015</h3>
+<p class="text-on-surface-variant text-body-sm">Chittagong, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ৬৫,০০,০০০</span>
+<span class="text-on-surface-variant text-xs">6 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 5 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBY9Af2JiCjKZFN96t-tKW6Xu4juK4nC8hIutfEpGSWp2P-nwb0ZB6Zvx6PbFGz7nRwnJonPU7AUG4RP2Q4uLjkPkhleRvxLZyKu8zcnQm-q7tpk6JBkKJ-c5ElcJVgsu47uaLzyz1DhC4zT3ArSGGpUe6NsVYT5pDRy4pIy1K_5Jx7zdTRW-8mnQjH_XtuLnIgjgKSZJNXAGd6uPf8x45ao5gOoZzYZZeC_5uTBQnnuoUX1ifBPrjb6RamMCKn3_JiJ500jR-YPxJ" alt="Honda Vezel RS 2018">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Honda Vezel RS 2018</h3>
+<p class="text-on-surface-variant text-body-sm">Sylhet, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ২৪,৮০,০০০</span>
+<span class="text-on-surface-variant text-xs">8 hours ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 6 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4f0yAXRgudkDW4G2SS34D631PdND8CNvz0c4qzennrDiIeYbl92NEiIJ8SA0JltH0YjkZ66ApRdEsALV1ATy8q2RecfudwAAWIEJrO2lttHeQW9fyHpSqNU6RcycGlhA-GFIlH3_8D0x0gTXaGnQ3BlVZicz3kSbP2ezIQ59E7Th4UiPqszX33Wv8lBjhDdVVMVHML5gY8JA1tY48gt2w45ghqA4qM_JezLhDrkrMZgFkNRaIzDuTpu3O_UAsnYhSmlEmCTJPdN8Q" alt="Nissan X-Trail Hybrid 2018">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Nissan X-Trail Hybrid 2018</h3>
+<p class="text-on-surface-variant text-body-sm">Dhaka, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ২৯,০০,০০০</span>
+<span class="text-on-surface-variant text-xs">1 day ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 7 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLIqco3Ey1Wy7c_fFPMWHXbNza7c26nHwV_71C1yBBtL_fSp4I0M6BzcSFf0iC-c-BAwPQ1WQ8W06rDQ0mMH2wGgExNZCVN9QsSkL5jebjANvPa9I5YLltabKLhDEOC7qoY2Fhj_h7BH567y8I2G-h93o6m-fn1KqiPcQqflssvxlrusoerD_joJ5nLqX12eyksSmygca2HFm94cdrp-ZmPtFHBbPC-vLSBb_D-RYiZWJqKCeme8JtAFom7wiNZQkHlsDTMsrMEYEV" alt="Toyota Allion 2006 Pearl">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Toyota Allion 2006 Pearl</h3>
+<p class="text-on-surface-variant text-body-sm">Dhaka, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ১৫,৮০,০০০</span>
+<span class="text-on-surface-variant text-xs">1 day ago</span>
+</div>
+</div>
+</div>
+<!-- Similar Item 8 -->
+<div class="bg-white p-4 rounded-xl shadow-sm border border-outline-variant/30 flex gap-gutter hover:shadow-md transition-shadow cursor-pointer">
+<img class="h-32 object-cover rounded-lg w-32 md:w-48" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEgYIUaXJZVvhxds3fPLGVLB9qOOYtmvZS_UC5rrQp8Ymu6pzHHtXWnaI9F3WDjOi8CgdXDaYqUdB6eEqnZtLYBGXxQQ4Mb4XAWv_-D5cFLEh5vCVEDORPqkVx9R2QgjpUQ8hQl_j1AOlYg2mqKPFtjbYmfZqSgSSxafZt2DsVsmkPrvCFTuzEIx9hdAA04YtveQfxYAfZX79vf_Ya55uKPAROKzexR9sLmAKKdEwAhBWP-RwyinNGdJisnCG2DSG9Kv0keyj8m_eA" alt="Toyota Premio F 2018">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<h3 class="font-headline-sm text-primary">Toyota Premio F 2018</h3>
+<p class="text-on-surface-variant text-body-sm">Khulna, Bangladesh</p>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-secondary font-price-display">BDT ৩২,০০,০০০</span>
+<span class="text-on-surface-variant text-xs">2 days ago</span>
+</div>
+</div>
+</div><div class="flex justify-between border-b border-outline-variant pb-2">
+<span class="text-on-surface-variant">রেজিস্ট্রেশন বছর</span>
+<span class="font-semibold">2023</span>
+</div></div>
+</section>
+</main>
+<!-- Bottom Strip: Motors-style thumbnail scroll -->
+<div class="sticky bottom-0 w-full bg-inverse-surface text-inverse-on-surface py-4 shadow-lg border-t border-white/10 z-40 hidden md:block">
+<div class="max-w-container-max mx-auto px-gutter flex items-center gap-stack-lg">
+<div class="flex items-center gap-2 text-label-md shrink-0 cursor-pointer hover:text-primary transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+<span class="">SEARCH RESULTS</span>
+</div>
+<div class="flex-1 flex gap-4 overflow-hidden">
+<div class="flex gap-4 scroll-hide">
+<img class="w-20 h-14 object-cover rounded-lg ring-2 ring-primary" data-alt="Small thumbnail of a white Toyota sedan, studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-D1z2BjQf_t0vrMNOTs9uOQbBvx_AIg4xU8O-Bwa5xcL0PiK3PwrezWJfPb16oZiJ7lNueC4O-bNQAnpv7P-1x5JIUQC5cxRH0HXV8rg6DeRlOAXXwh3vnVKJU74bgqV6FEhDudujBWRfYBUkeydGt7RjcJuasqg88SG_CnzwA_sil1_L6pKF57LcEo9fEANY-lUXgKSosEmxFCR1j6s32DXr2VTBRMWtwiEHNTlAg_CJsIRl6BojTDno33HVMcH6af9hAxTQUvB7">
+<img class="w-20 h-14 object-cover rounded-lg opacity-60 hover:opacity-100 transition-opacity" data-alt="Small thumbnail of a blue Toyota hatchback, natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcqoR2VgDgZdsL7AfytCLuRNs8d0mGZVzdefh9av7uLhTIHM6AFBhtDMfp9yTyue_SsIbX7_uot4S4wIRGxuhngPzuQuiduhOjDjIFK4PRHUIx98DoqutggRhUmKzB8Pt7jtgR9uNrAQu61RaWcMoFErdzTJ-KnI99eRSVuEDv3qFL7P077VW5h2WRxa87Q8fazeWnGKJhA5TjIFlCuZML2LpDEqN-FvUEUSKsN-9ZIGlz1WsuYotuSBOi6E2q8ygTAl6IEzjVdB33">
+<img class="w-20 h-14 object-cover rounded-lg opacity-60 hover:opacity-100 transition-opacity" data-alt="Small thumbnail of a silver sedan, dusk lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCglQqgCCZvekDEP86f610WXqX6N5-jZJPARgv8aDf-4SW5YmyEeQ7cUvuG8Z763KwhhWsHj07Cryup6jZAbdr6JuOjbvLOKBQkWr2f8hYVX2fV-D7xAhE59lh_ftGpE10dFZ6EUpVXD8NNAu-pA22Kxwjq3v3IxJSS3vSbiDWfe1aVLQFrqqF2r9cRlwxoK3qoF-Zyadr5N88uvq25GQ9pTxgpAcVBBlaNF3wPzlV_0Zfum-jskvL4ak075L0etju2czd6DdinOizB">
+<img class="w-20 h-14 object-cover rounded-lg opacity-60 hover:opacity-100 transition-opacity" data-alt="Small thumbnail of a black SUV, showroom lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuALk-dr0oePGdz9mUWnnzVR4SEqisk7-MfOV54HXuKclsCG0RnQqqrGQGWM2f-g3xKVBCrsJ1AUBPLIV0qHoysJ-CvAuVSqYQb7oMSVhupKJitgQf605WYbcDnITw6kvOTUz5gX7Znz3afSZZQiAA_cpFeZOs1Zt5gcCF0BLloXykAVLYfCxnxd0pcqV00hT0EH5WvDncKqzSxeq2YBmKJ6bv_qMIr8SArzESCkPd6_U68Bxr-VjtszaedsTVNbHbJ4hP6dzVm1r5HR">
+<img class="w-20 h-14 object-cover rounded-lg opacity-60 hover:opacity-100 transition-opacity" data-alt="Small thumbnail of a grey hybrid sedan, clean studio." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBolQ0Z4Hfz7GWC2vUPtwbJmZ1CYxPh73rUSHXeC_sOtnx7PqR8iJC2bHSEXciv4G_Hz4UrDjRDEuIJiQYPOR7WSkVnpkWDzo_jzf7mvpSGR3Ned66-vf7FFcSfE_nq2j1uZ-IdKVqkKQrWiMkWoYuIoLnsLJO_ckmKTDk0fRKKDin-1ABfDMJY-xAgkj0yaFD2xXWUOvcjvIRzISZ-ddFkToaQLCD6azgnoqBshhZDP-XmbPB33aXCpoLOfcj8SLldDbniedFSEPlM">
+</div>
+</div>
+<div class="flex items-center gap-2 text-label-md shrink-0 cursor-pointer hover:text-primary transition-colors">
+<span class="">NEXT AD</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Footer (from Shared Components JSON)-->
+<footer class="bg-inverse-surface dark:bg-surface-container-highest mt-stack-lg w-full py-section-padding px-gutter">
+<div class="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter text-inverse-on-surface">
+<div>
+<span class="font-headline-sm text-surface-bright mb-4 block">GariSale</span>
+<p class="font-body-sm opacity-80">Bangladesh's most trusted automotive marketplace for buying and selling cars.</p>
+</div>
+<div>
+<h4 class="font-headline-sm text-surface-bright mb-4">Quick Links</h4>
+<ul class="space-y-2 font-body-sm opacity-80">
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Terms of Service</a></li>
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Privacy Policy</a></li>
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Contact Support</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-sm text-surface-bright mb-4">Dealer Zone</h4>
+<ul class="space-y-2 font-body-sm opacity-80">
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Dealer Login</a></li>
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Register as Dealer</a></li>
+<li class=""><a class="hover:text-primary-fixed-dim transition-colors" href="#">Advertising Options</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-headline-sm text-surface-bright mb-4">Newsletter</h4>
+<div class="flex gap-2">
+<input class="bg-white/10 border-none rounded-lg text-white w-full focus:ring-primary" placeholder="Your email" type="email">
+<button class="bg-primary px-4 py-2 rounded-lg"><span class="material-symbols-outlined">send</span></button>
+</div>
+</div>
+</div>
+<div class="max-w-container-max mx-auto border-t border-white/10 mt-stack-lg pt-stack-md text-center">
+<p class="font-label-md opacity-60">© 2024 Premium Auto Market. All rights reserved.</p>
+</div>
+</footer>
+<!-- Bottom Nav Bar for Mobile -->
+<nav class="md:hidden fixed bottom-0 w-full flex justify-around items-center py-2 px-4 pb-safe bg-surface dark:bg-surface-container-high border-t border-outline-variant z-50">
+<div class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed font-bold">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-md">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-md">Favorites</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-md">Sell</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+<span class="font-label-md">Menu</span>
+</div>
+</nav>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('button, .cursor-pointer').forEach(el => {
+            el.addEventListener('mousedown', () => el.style.transform = 'scale(0.96)');
+            el.addEventListener('mouseup', () => el.style.transform = 'scale(1)');
+            el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
+        });
+
+        // Simple gallery switcher simulation
+        const thumbnails = document.querySelectorAll('.scroll-hide img');
+        const mainImage = document.querySelector('.relative.group img');
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const oldSrc = mainImage.src;
+                const oldAlt = mainImage.dataset.alt;
+                mainImage.src = thumb.src;
+                mainImage.dataset.alt = thumb.dataset.alt;
+                // Add a small fade effect
+                mainImage.classList.add('opacity-50');
+                setTimeout(() => mainImage.classList.remove('opacity-50'), 150);
+            });
+        });
+    </script>
+
+</body></html>
