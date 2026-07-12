@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -76,7 +76,7 @@ function getDealRatingConfig(rating: MarketplaceListing['deal_rating']) {
   }
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -416,29 +416,7 @@ export default function SearchPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-surface border-b border-gray-200 h-20 flex items-center sticky top-0 z-40 shadow-sm">
-        <nav className="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
-          <Link href="/" className="text-2xl font-bold text-textPrimary font-outfit">
-            <span className="text-primary">Garisale</span>
-          </Link>
-          <div className="hidden lg:flex items-center gap-stack-lg text-sm font-semibold text-textSecondary">
-            <Link href="/" className="hover:text-primary transition-colors py-2">Home</Link>
-            <Link href="/search" className="text-primary border-b-2 border-primary font-bold py-2">গাড়ি খুঁজুন</Link>
-            <Link href="/value-my-car" className="hover:text-primary transition-colors py-2">মূল্য যাচাই (IMV)</Link>
-            <Link href="/sell" className="hover:text-primary transition-colors py-2">গাড়ি বিক্রি করুন</Link>
-          </div>
-          <Link 
-            href="/sell"
-            className="bg-[#16A34A] text-white px-5 py-2 rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-sm flex items-center gap-1 shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            গাড়ি বিক্রি করুন
-          </Link>
-        </nav>
-      </header>
-
+    <>
       {/* Main Content Area */}
       <main className="max-w-container-max mx-auto px-gutter py-8">
         <div className="flex flex-col lg:flex-row gap-8">
@@ -595,6 +573,42 @@ export default function SearchPage() {
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-surface border-b border-gray-200 h-20 flex items-center sticky top-0 z-40 shadow-sm">
+        <nav className="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
+          <Link href="/" className="text-2xl font-bold text-textPrimary font-outfit">
+            <span className="text-primary">Garisale</span>
+          </Link>
+          <div className="hidden lg:flex items-center gap-stack-lg text-sm font-semibold text-textSecondary">
+            <Link href="/" className="hover:text-primary transition-colors py-2">Home</Link>
+            <Link href="/search" className="text-primary border-b-2 border-primary font-bold py-2">গাড়ি খুঁজুন</Link>
+            <Link href="/value-my-car" className="hover:text-primary transition-colors py-2">মূল্য যাচাই (IMV)</Link>
+            <Link href="/sell" className="hover:text-primary transition-colors py-2">গাড়ি বিক্রি করুন</Link>
+          </div>
+          <Link 
+            href="/sell"
+            className="bg-[#16A34A] text-white px-5 py-2 rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-sm flex items-center gap-1 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">add_circle</span>
+            গাড়ি বিক্রি করুন
+          </Link>
+        </nav>
+      </header>
+
+      <Suspense fallback={
+        <div className="max-w-container-max mx-auto px-gutter py-12 text-center text-textSecondary font-semibold">
+          লোডিং হচ্ছে...
+        </div>
+      }>
+        <SearchPageContent />
+      </Suspense>
     </div>
   );
 }
