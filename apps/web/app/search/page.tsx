@@ -4,34 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-
-// Types based on OpenAPI schema
-interface VehiclePhoto {
-  id: string;
-  url: string;
-  is_primary: boolean;
-}
-
-interface MarketplaceListing {
-  id: string;
-  slug: string;
-  title: string;
-  asking_price: number;
-  original_price?: number;
-  price_drop_flag: boolean;
-  deal_rating: 'great_deal' | 'good_deal' | 'fair_price' | 'overpriced' | 'unrated';
-  year: number;
-  make: string;
-  model: string;
-  transmission: string;
-  mileage_km: number;
-  district: string;
-  photo_count: number;
-  photos: VehiclePhoto[];
-  body_type?: string;
-  fuel_type?: string;
-  created_at: string;
-}
+import { MOCK_LISTINGS, MarketplaceListing } from '../../components/mockData';
 
 // BDT formatting function following BD standards
 function formatBDT(amount: number): string {
@@ -149,22 +122,47 @@ function SearchPageContent() {
       if (selectedMake) url.searchParams.append('make', selectedMake);
       if (selectedDistrict) url.searchParams.append('district', selectedDistrict);
       
-      const res = await fetch(url.toString(), {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!res.ok) throw new Error('API fetch failed');
-      const result = await res.json();
-      return result.success ? result.data : [];
+      try {
+        const res = await fetch(url.toString(), {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('API fetch failed');
+        const result = await res.json();
+        return result.success && result.data && result.data.length > 0 ? result.data : MOCK_LISTINGS;
+      } catch (err) {
+        console.warn('Using mock listings search fallback due to:', err);
+        return MOCK_LISTINGS;
+      }
     }
   });
 
-  // Client side filtering & sorting fallback for params MeiliSearch doesn't fully index in mock db mode
+  // Client side filtering & sorting
   const filteredAndSortedListings = useMemo(() => {
     let result = [...listings];
+
+    // Filter by search text query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.title.toLowerCase().includes(q) || 
+        item.make.toLowerCase().includes(q) || 
+        item.model.toLowerCase().includes(q)
+      );
+    }
+
+    // Filter by make
+    if (selectedMake) {
+      result = result.filter(item => item.make.toLowerCase() === selectedMake.toLowerCase());
+    }
 
     // Filter by model
     if (selectedModel) {
       result = result.filter(item => item.model?.toLowerCase() === selectedModel.toLowerCase());
+    }
+
+    // Filter by district
+    if (selectedDistrict) {
+      result = result.filter(item => item.district.toLowerCase() === selectedDistrict.toLowerCase());
     }
 
     // Filter by body type
@@ -206,13 +204,13 @@ function SearchPageContent() {
     } else if (sortOption === 'newest') {
       result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } else {
-      // Default / Best Deal: Sort by great deal -> good deal -> fair price -> others
+      // Default / Best Deal
       const ratingWeight = { great_deal: 4, good_deal: 3, fair_price: 2, unrated: 1, overpriced: 0 };
       result.sort((a, b) => (ratingWeight[b.deal_rating] || 0) - (ratingWeight[a.deal_rating] || 0));
     }
 
     return result;
-  }, [listings, selectedModel, selectedBodyType, selectedFuelType, priceMaxInput, mileageMaxInput, selectedDealRatings, sortOption]);
+  }, [listings, searchQuery, selectedMake, selectedModel, selectedDistrict, selectedBodyType, selectedFuelType, priceMaxInput, mileageMaxInput, selectedDealRatings, sortOption]);
 
   // Calculate dynamic facet counts based on listings
   const facets = useMemo(() => {

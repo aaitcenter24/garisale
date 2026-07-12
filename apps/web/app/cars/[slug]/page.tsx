@@ -1,53 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import Gallery from '../../../components/Gallery';
 import LeadForm from '../../../components/LeadForm';
+import { MOCK_LISTINGS, MarketplaceListing } from '../../../components/mockData';
 
 export const revalidate = 300; // ISR revalidate: 300 seconds
-
-interface VehiclePhoto {
-  id: string;
-  url: string;
-  is_primary: boolean;
-}
-
-interface Dealership {
-  id: string;
-  business_name: string;
-  slug: string;
-  logo_url?: string;
-  rating?: number;
-  review_count: number;
-  created_at: string;
-  phone: string;
-  whatsapp_number?: string;
-}
-
-interface MarketplaceListing {
-  id: string;
-  slug: string;
-  title: string;
-  description?: string;
-  asking_price: number;
-  original_price?: number;
-  price_drop_flag: boolean;
-  deal_rating: 'great_deal' | 'good_deal' | 'fair_price' | 'overpriced' | 'unrated';
-  deal_score?: number;
-  year: number;
-  make: string;
-  model: string;
-  variant?: string;
-  body_type?: string;
-  engine_cc?: number;
-  fuel_type: string;
-  transmission: string;
-  condition: string;
-  mileage_km: number;
-  district: string;
-  photo_count: number;
-  photos: VehiclePhoto[];
-  dealership?: Dealership;
-}
 
 // BDT formatting function following BD standards
 function formatBDT(amount: number): string {
@@ -74,64 +32,6 @@ function getDealRatingConfig(rating: MarketplaceListing['deal_rating']) {
   }
 }
 
-// High-fidelity mock vehicle fallback for testing/preview when API has no entries yet
-const MOCK_LISTING: MarketplaceListing = {
-  id: 'mock-vehicle-id-12345',
-  slug: '2019-toyota-axio-dhaka-xk7p2',
-  title: 'Toyota Axio G Grade 2019 Pearl White',
-  description: 'Toyota Axio G Grade 2019 model in pristine condition. Pearl white exterior with clean beige interior. Single hand driven, well maintained, octan & hybrid driven. Dynamic suspension, soft touch AC panel, push start, HID projection headlights, reverse camera, lane assist, collision mitigation system. No accident history, all papers are up-to-date.',
-  asking_price: 1850000,
-  original_price: 1900000,
-  price_drop_flag: true,
-  deal_rating: 'great_deal',
-  deal_score: -0.09,
-  year: 2019,
-  make: 'Toyota',
-  model: 'Axio',
-  variant: 'G Grade',
-  body_type: 'Sedan',
-  engine_cc: 1500,
-  fuel_type: 'hybrid',
-  transmission: 'automatic',
-  condition: 'used',
-  mileage_km: 45000,
-  district: 'Dhaka',
-  photo_count: 5,
-  photos: [
-    {
-      id: 'photo-1',
-      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBpsmL_ZTcyRjRLkXwM2Ia3BddzCQJ6lOLxfAwInwkAvpRWUty6NSK48R38nfzjdP0iKXJ9r-4R9sQPmGz-OvUISaeD-tqFgHJpM7GJ_DjUGXzmlPghJOYfQ7EUe6_BkSloQwWnuI9maBw-UiBscmr5CAzpSrYLbLc2uAHdJjKv4TP23S1hKjwR3a5Q1TeMF0T97WlWIhXDYSRtBau_dNbs_rWlFLqndY8Mkh_lwLy_EF7WhAOaPvIOt-FH4e_H_CSRrkiHzfuzCSoi',
-      is_primary: true,
-    },
-    {
-      id: 'photo-2',
-      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPka1MBzclAOMn24NPZ2dgkndFsd6fPCq_blD2TrnM9mnRTxJgDPsTzOqVRJ85doXPILFOTt437RaTOVNb7nnqTgWJq5Z8y8ML6pNs5cUeNiPdyeFnrwu02LXF37oajriFJgxBDIbaafyDOpQI-1CPz33ctzy6TIvKeTa61wjADaRGujY2zIGSM4D1FlRAv6o94FJE6UA1R4slkMKQBbnPl1D3m7VDRFAlLfK7GLkOjLoqFIvV54ML9ki5IE5clpC70NK5RtEBjPoN',
-      is_primary: false,
-    },
-    {
-      id: 'photo-3',
-      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCxAUxM-k69IU5yfXjeiu14FSrJDyzv84Q2ScouKOQGu6MueVRZO2Y-lQqHtTIwD2GQmAD6nQVSBshANoNumAdjK43yZbtex1BgVEtwoaSh8X_tE8cIxKaDRNNnGunelyNqujF2e6wPKMzJWu6VHxeH6E0Ude9RlSXCxqfd2aJIUbTIMM1a6F0zAqQQeGJzvo6nBS9hXhw3HHCqgm8FbV7U7xyC9-K__6CHVAI3bl-BHybTn_lLWdbGVfJua_mpD1XWZSQxn-29GF8F',
-      is_primary: false,
-    },
-    {
-      id: 'photo-4',
-      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKpDWoEYFizlNCPgePCoDlowSr2Tob5a0kDrtFm0E2RZksBwl5aAjuJLD-I_7jETttg84sHdKaxjimqohU77NmFNCf6Va3nm4u2uThbYuh4EcPGzsDaxsc-tkL81lcmUyWpDvETvgWI7JS2aySGVjH8uMFFBXrVq5J7N7C2JFs2Z-zoq8uK2oUSF4kRKQlnXs3K2NIblDbguRTxWw0g-a40y85iLrO-hW3QuDfEX4W47UnwLOad77pHw5YIREPWX4gOm15ds50qCay',
-      is_primary: false,
-    },
-  ],
-  dealership: {
-    id: 'mock-dealer-id',
-    business_name: 'Dhaka Premium Motors',
-    slug: 'dhaka-premium-motors',
-    logo_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA6jd0uenEKgpikr-xJyUQUpeW8wpnarwZNAzFFYSG0ckrUZNFeGSqZ9Q_oozanHDtVLvmmhTI9Vk-6K6Dqmifa55SRG65M-usTWvM2Z41s4v7SGXxwQw4qqb2A_f2wsiLDoSJI5YBd9SAwlGy-Fr_86Ttu4g09HGkzzzx3sQyThkXuhW-Ue7CS2dqGoOA-fd4IdSdF8dZX65R9dYH243RziZYf7awl8GcyKrKBdd3Ti0Tzj_34_2g6Q6X3hJPTFKUeORpDYupavcy8',
-    rating: 4.8,
-    review_count: 36,
-    created_at: '2018-06-15T00:00:00Z',
-    phone: '01611-613952',
-    whatsapp_number: '8801611613952',
-  }
-};
-
 // Fetch single listing by slug from API
 async function getListing(slug: string): Promise<MarketplaceListing | null> {
   const apiUrl = `https://api.garisale.com/api/v1/public/marketplace/listings/${slug}`;
@@ -151,7 +51,7 @@ async function getListing(slug: string): Promise<MarketplaceListing | null> {
   }
 }
 
-// Fetch similar listings from API
+// Fetch similar listings from API (up to 10 listings)
 async function getSimilarListings(make: string, excludeId: string): Promise<MarketplaceListing[]> {
   const apiUrl = `https://api.garisale.com/api/v1/public/marketplace/search?make=${make}`;
   try {
@@ -159,13 +59,15 @@ async function getSimilarListings(make: string, excludeId: string): Promise<Mark
       next: { revalidate: 300 },
       headers: { 'Accept': 'application/json' }
     });
-    if (!res.ok) return [];
+    if (!res.ok) throw new Error();
     const result = await res.json();
     const list = result.success ? result.data : [];
-    return list.filter((l: any) => l.id !== excludeId).slice(0, 4);
-  } catch {
-    return [];
-  }
+    if (list.length > 0) {
+      return list.filter((l: any) => l.id !== excludeId).slice(0, 10);
+    }
+  } catch {}
+  // Fallback to shared mock listings, returning at least 10 items
+  return MOCK_LISTINGS.filter(l => l.id !== excludeId).slice(0, 10);
 }
 
 export async function generateStaticParams() {
@@ -176,21 +78,26 @@ export async function generateStaticParams() {
     const listings = result.success ? result.data : [];
     return listings.map((l: any) => ({ slug: l.slug }));
   } catch {
-    return [];
+    // Pre-render the mock listing slugs for local preview compiling
+    return MOCK_LISTINGS.map(l => ({ slug: l.slug }));
   }
 }
 
 export default async function VehicleDetailPage({ params }: { params: { slug: string } }) {
-  // Fetch from API, fall back to high-fidelity mock listing for demo/testing
   let listing = await getListing(params.slug);
+
   if (!listing) {
-    listing = MOCK_LISTING;
+    listing = MOCK_LISTINGS.find(l => l.slug === params.slug) || null;
+  }
+
+  if (!listing) {
+    notFound();
   }
 
   const similarListings = await getSimilarListings(listing.make, listing.id);
   const ratingConfig = getDealRatingConfig(listing.deal_rating);
 
-  // Calculate IMV Slider Position based on deal_score (representing deviation from market average)
+  // Calculate IMV Slider Position based on deal_score (deviation from market average)
   const deviation = Number(listing.deal_score || 0);
   const sliderPosition = Math.max(0, Math.min(100, 50 + (deviation * 333)));
 
@@ -366,10 +273,29 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
                   <span className="text-textSecondary">লোকেশন</span>
                   <span className="font-semibold text-textPrimary">{listing.district}</span>
                 </div>
+                <div className="flex justify-between border-b pb-2 text-sm">
+                  <span className="text-textSecondary">রেজিস্ট্রেশন বছর</span>
+                  <span className="font-semibold text-textPrimary">{listing.registration_year || 'N/A'}</span>
+                </div>
               </div>
             </section>
 
-            {/* Description / Seller Notes */}
+            {/* Features Checklist / Benefits (Requested) */}
+            {listing.features && listing.features.length > 0 && (
+              <section className="space-y-4">
+                <h2 className="text-xl font-bold text-textPrimary">গাড়িটির সুবিধা সমূহ / ফিচার লিস্ট</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                  {listing.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm font-semibold text-textPrimary">
+                      <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Description / Seller Notes (Requested: placed after features checklist) */}
             {listing.description && (
               <section className="space-y-4">
                 <h2 className="text-xl font-bold text-textPrimary">বিক্রেতার বিবরণ</h2>
@@ -379,7 +305,7 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
               </section>
             )}
 
-            {/* Static Map Fallback (Resolved Question 2) */}
+            {/* Static Map Fallback */}
             <section className="space-y-4">
               <h2 className="text-xl font-bold text-textPrimary">অবস্থান মানচিত্র</h2>
               <div className="h-64 bg-gray-200 rounded-xl overflow-hidden relative shadow-sm border border-gray-300">
@@ -537,11 +463,11 @@ export default async function VehicleDetailPage({ params }: { params: { slug: st
 
         </div>
 
-        {/* Similar Cars Section */}
+        {/* Similar Cars Section (Requested: at least 10 cards) */}
         {similarListings.length > 0 && (
           <section className="border-t border-gray-200 pt-12 space-y-6">
             <h2 className="text-2xl font-bold font-outfit text-textPrimary">এই ধরণের আরও গাড়ি</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarListings.map((sim) => {
                 const simConfig = getDealRatingConfig(sim.deal_rating);
                 const primaryPhoto = sim.photos?.find(p => p.is_primary) || sim.photos?.[0];

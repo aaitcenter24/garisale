@@ -1,33 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
+import { MOCK_LISTINGS, MarketplaceListing } from '../components/mockData';
 
 export const revalidate = 60; // ISR revalidate every 60 seconds
-
-// Types based on OpenAPI schema
-interface VehiclePhoto {
-  id: string;
-  url: string;
-  is_primary: boolean;
-}
-
-interface MarketplaceListing {
-  id: string;
-  slug: string;
-  title: string;
-  asking_price: number;
-  original_price?: number;
-  price_drop_flag: boolean;
-  deal_rating: 'great_deal' | 'good_deal' | 'fair_price' | 'overpriced' | 'unrated';
-  year: number;
-  make: string;
-  model: string;
-  transmission: string;
-  mileage_km: number;
-  district: string;
-  photo_count: number;
-  photos: VehiclePhoto[];
-  created_at: string;
-}
 
 // Fetch featured/latest listings from API
 async function getLatestListings(): Promise<MarketplaceListing[]> {
@@ -43,11 +18,10 @@ async function getLatestListings(): Promise<MarketplaceListing[]> {
       throw new Error(`Failed to fetch: ${res.status}`);
     }
     const result = await res.json();
-    return result.success ? result.data : [];
+    return result.success && result.data && result.data.length > 0 ? result.data : MOCK_LISTINGS.slice(0, 8);
   } catch (error) {
-    console.error('Error fetching listings for homepage:', error);
-    // Return empty array to fallback gracefully
-    return [];
+    console.error('Error fetching listings for homepage, falling back to mock listings:', error);
+    return MOCK_LISTINGS.slice(0, 8);
   }
 }
 
@@ -64,15 +38,15 @@ function formatBDT(amount: number): string {
 function getDealRatingConfig(rating: MarketplaceListing['deal_rating']) {
   switch (rating) {
     case 'great_deal':
-      return { text: '#16A34A', bg: '#DCFCE7', label: 'Great Deal', border: 'border-green-200' };
+      return { text: '#16A34A', bg: '#DCFCE7', label: 'Great Deal' };
     case 'good_deal':
-      return { text: '#0D9488', bg: '#CCFBF1', label: 'Good Deal', border: 'border-teal-200' };
+      return { text: '#0D9488', bg: '#CCFBF1', label: 'Good Deal' };
     case 'fair_price':
-      return { text: '#D97706', bg: '#FEF3C7', label: 'Fair Price', border: 'border-amber-200' };
+      return { text: '#D97706', bg: '#FEF3C7', label: 'Fair Price' };
     case 'overpriced':
-      return { text: '#DC2626', bg: '#FEE2E2', label: 'Overpriced', border: 'border-red-200' };
+      return { text: '#DC2626', bg: '#FEE2E2', label: 'Overpriced' };
     default:
-      return { text: '#9CA3AF', bg: '#F3F4F6', label: 'No Rating', border: 'border-gray-200' };
+      return { text: '#9CA3AF', bg: '#F3F4F6', label: 'No Rating' };
   }
 }
 
@@ -81,12 +55,12 @@ export default async function Homepage() {
 
   // Categories list based on Stitch design
   const categories = [
-    { name: 'Sedan', icon: 'directions_car', slug: 'sedan' },
-    { name: 'SUV', icon: 'airport_shuttle', slug: 'suv' },
-    { name: 'Microbus', icon: 'airport_shuttle', slug: 'microbus' },
-    { name: 'Pickup', icon: 'local_shipping', slug: 'pickup' },
-    { name: 'Hatchback', icon: 'time_to_leave', slug: 'hatchback' },
-    { name: 'Crossover', icon: 'minor_crash', slug: 'crossover' },
+    { name: 'Sedan', icon: 'directions_car' },
+    { name: 'SUV', icon: 'airport_shuttle' },
+    { name: 'Microbus', icon: 'airport_shuttle' },
+    { name: 'Pickup', icon: 'local_shipping' },
+    { name: 'Hatchback', icon: 'time_to_leave' },
+    { name: 'Crossover', icon: 'minor_crash' },
   ];
 
   return (
@@ -283,91 +257,53 @@ export default async function Homepage() {
             </Link>
           </div>
 
-          {listings.length === 0 ? (
-            // Empty/Fallback state displaying mock items if database is empty
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
-              {/* Fallback Card 1 */}
-              <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-card hover:shadow-xl transition-all hover:-translate-y-1 group">
-                <div className="relative aspect-[16/9] bg-gray-200">
-                  <img 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3QCNHzM0-jssyS7WBR3kd45hGD45iz0WhDj1H3qcbQT8sZxvWPgflNsPC0MD8j3nr7IQfIiWMpcaLrcL_I34hz3EkfemroxHei8fcYFWTetHRYvfDT7PeAQybMbj8Scoi4mGrVdSflcFU_PK3baSNEFoUhdvfyDAOiMHufI_WgHeY7V0rhpIFeCSPLzJL_pn9p0MEEeU_L71zhIdLJfrIfjFb--LqVXCWGCeY7yObotDSEu6MwP8a9pWPMUZ3Aqidvn3XCN1eQ9E1"
-                    alt="Toyota Axio"
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute top-2 right-2 bg-deal-greatBg text-deal-great text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                    Great Deal
-                  </span>
-                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">image</span> 6
-                  </div>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between text-xs text-textSecondary">
-                    <span>Dhaka · 2 hours ago</span>
-                  </div>
-                  <h3 className="font-bold text-textPrimary text-base leading-tight line-clamp-1">Toyota Axio 2019</h3>
-                  <div className="text-deal-great font-bold text-lg">BDT ১৫,৫০,০০০</div>
-                  <div className="flex items-center gap-2 text-xs text-textSecondary border-t pt-3">
-                    <span className="bg-gray-100 px-2 py-1 rounded">Used</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">Automatic</span>
-                    <span className="bg-gray-100 px-2 py-1 rounded">68k km</span>
-                  </div>
-                  <button className="w-full border border-deal-great text-deal-great font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-deal-great hover:text-white transition-all text-sm">
-                    <span className="material-symbols-outlined text-[18px]">chat</span> WhatsApp
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Live API Data Grid
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
-              {listings.map((listing) => {
-                const config = getDealRatingConfig(listing.deal_rating);
-                const primaryPhoto = listing.photos?.find(p => p.is_primary) || listing.photos?.[0];
-                return (
-                  <div key={listing.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-card hover:shadow-xl transition-all hover:-translate-y-1 group">
-                    <div className="relative aspect-[16/9] bg-gray-100">
-                      <img 
-                        src={primaryPhoto?.url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuD3QCNHzM0-jssyS7WBR3kd45hGD45iz0WhDj1H3qcbQT8sZxvWPgflNsPC0MD8j3nr7IQfIiWMpcaLrcL_I34hz3EkfemroxHei8fcYFWTetHRYvfDT7PeAQybMbj8Scoi4mGrVdSflcFU_PK3baSNEFoUhdvfyDAOiMHufI_WgHeY7V0rhpIFeCSPLzJL_pn9p0MEEeU_L71zhIdLJfrIfjFb--LqVXCWGCeY7yObotDSEu6MwP8a9pWPMUZ3Aqidvn3XCN1eQ9E1'} 
-                        alt={listing.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <span 
-                        style={{ color: config.text, backgroundColor: config.bg }}
-                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm border border-opacity-40"
-                      >
-                        {config.label}
-                      </span>
-                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">image</span> {listing.photo_count}
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-center justify-between text-xs text-textSecondary">
-                        <span>{listing.district}</span>
-                      </div>
-                      <Link href={`/cars/${listing.slug}`} className="hover:text-primary transition-colors">
-                        <h3 className="font-bold text-textPrimary text-base leading-tight line-clamp-1">{listing.title}</h3>
-                      </Link>
-                      <div className="text-deal-great font-bold text-lg">{formatBDT(listing.asking_price)}</div>
-                      <div className="flex items-center gap-2 text-xs text-textSecondary border-t pt-3">
-                        <span className="bg-gray-100 px-2 py-1 rounded">Used</span>
-                        <span className="bg-gray-100 px-2 py-1 rounded">{listing.transmission}</span>
-                        <span className="bg-gray-100 px-2 py-1 rounded">{Math.round(listing.mileage_km / 1000)}k km</span>
-                      </div>
-                      <Link 
-                        href={`https://wa.me/8801700000000?text=I%20am%20interested%20in%20your%20listing%20${encodeURIComponent(listing.title)}`}
-                        target="_blank"
-                        className="w-full border border-deal-great text-deal-great font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-deal-great hover:text-white transition-all text-sm mt-2 block text-center"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">chat</span> WhatsApp
-                      </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {listings.map((listing) => {
+              const config = getDealRatingConfig(listing.deal_rating);
+              const primaryPhoto = listing.photos?.find(p => p.is_primary) || listing.photos?.[0];
+              return (
+                <div key={listing.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-card hover:shadow-xl transition-all hover:-translate-y-1 group">
+                  <div className="relative aspect-[16/9] bg-gray-100">
+                    <img 
+                      src={primaryPhoto?.url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuD3QCNHzM0-jssyS7WBR3kd45hGD45iz0WhDj1H3qcbQT8sZxvWPgflNsPC0MD8j3nr7IQfIiWMpcaLrcL_I34hz3EkfemroxHei8fcYFWTetHRYvfDT7PeAQybMbj8Scoi4mGrVdSflcFU_PK3baSNEFoUhdvfyDAOiMHufI_WgHeY7V0rhpIFeCSPLzJL_pn9p0MEEeU_L71zhIdLJfrIfjFb--LqVXCWGCeY7yObotDSEu6MwP8a9pWPMUZ3Aqidvn3XCN1eQ9E1'} 
+                      alt={listing.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <span 
+                      style={{ color: config.text, backgroundColor: config.bg }}
+                      className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm border border-opacity-40"
+                    >
+                      {config.label}
+                    </span>
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">image</span> {listing.photo_count}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-textSecondary">
+                      <span>{listing.district}</span>
+                    </div>
+                    <Link href={`/cars/${listing.slug}`} className="hover:text-primary transition-colors">
+                      <h3 className="font-bold text-textPrimary text-base leading-tight line-clamp-1">{listing.title}</h3>
+                    </Link>
+                    <div className="text-deal-great font-bold text-lg">{formatBDT(listing.asking_price)}</div>
+                    <div className="flex items-center gap-2 text-xs text-textSecondary border-t pt-3">
+                      <span className="bg-gray-100 px-2 py-1 rounded">Used</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">{listing.transmission}</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded">{Math.round(listing.mileage_km / 1000)}k km</span>
+                    </div>
+                    <Link 
+                      href={`https://wa.me/8801700000000?text=I%20am%20interested%20in%20your%20listing%20${encodeURIComponent(listing.title)}`}
+                      target="_blank"
+                      className="w-full border border-deal-great text-deal-great font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-deal-great hover:text-white transition-all text-sm mt-2 block text-center"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">chat</span> WhatsApp
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
