@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import Gallery from '../../../components/Gallery';
 import LeadForm from '../../../components/LeadForm';
 import { MOCK_LISTINGS, MarketplaceListing } from '../../../components/mockData';
+import DistrictSearchContentWrapper from './DistrictSearchContentWrapper';
 
 export const revalidate = 300; // ISR revalidate: 300 seconds
 
@@ -68,29 +69,89 @@ async function getSimilarListings(make: string, excludeId: string): Promise<Mark
   return MOCK_LISTINGS.filter(l => l.id !== excludeId).slice(0, 10);
 }
 
+// Pre-render list of detail slugs AND programmatic districts
 export async function generateStaticParams() {
-  try {
-    const res = await fetch('https://api.garisale.com/api/v1/public/marketplace/search');
-    if (!res.ok) return [];
-    const result = await res.json();
-    const listings = result.success ? result.data : [];
-    return listings.map((l: any) => ({ make: l.slug }));
-  } catch {
-    return MOCK_LISTINGS.map(l => ({ make: l.slug }));
-  }
+  const detailSlugs = MOCK_LISTINGS.map(l => ({ make: l.slug }));
+  const districtSlugs = ['dhaka', 'chattogram', 'sylhet'].map(d => ({ make: d }));
+  return [...detailSlugs, ...districtSlugs];
 }
 
-export default async function VehicleDetailPage({ params }: { params: { make: string } }) {
-  // params.make carries the vehicle detail page slug (due to routing restructure)
-  const slug = params.make;
-  let listing = await getListing(slug);
+const DISTRICT_LIST = ['dhaka', 'chattogram', 'sylhet', 'khulna', 'rajshahi', 'barishal', 'rangpur', 'mymensingh'];
+
+export default async function CarsDynamicRouterPage({ params }: { params: { make: string } }) {
+  const pathParam = params.make.toLowerCase();
+
+  // ROUTE 1: Render Programmatic District search page if path is a division/district name
+  if (DISTRICT_LIST.includes(pathParam)) {
+    const displayDistrict = pathParam.charAt(0).toUpperCase() + pathParam.slice(1);
+    const seoTitle = `${displayDistrict}-এ বিক্রির জন্য গাড়ি - Garisale`;
+    const seoDescription = `${displayDistrict} জেলা থেকে যাচাইকৃত ও সাশ্রয়ী মূল্যে সেরা গাড়িগুলো খুঁজে নিন Garisale-এ।`;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 h-20 flex items-center sticky top-0 z-40 shadow-sm">
+          <nav className="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
+            <Link href="/" className="text-2xl font-bold text-textPrimary font-outfit">
+              <span className="text-primary">Garisale</span>
+            </Link>
+            <div className="hidden lg:flex items-center gap-stack-lg text-sm font-semibold text-textSecondary">
+              <Link href="/" className="hover:text-primary transition-colors py-2">Home</Link>
+              <Link href="/search" className="hover:text-primary transition-colors py-2">গাড়ি খুঁজুন</Link>
+              <Link href="/value-my-car" className="hover:text-primary transition-colors py-2">মূল্য যাচাই (IMV)</Link>
+              <Link href="/sell" className="hover:text-primary transition-colors py-2">গাড়ি বিক্রি করুন</Link>
+            </div>
+            <Link 
+              href="/sell"
+              className="bg-[#16A34A] text-white px-5 py-2 rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-sm flex items-center gap-1 shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              গাড়ি বিক্রি করুন
+            </Link>
+          </nav>
+        </header>
+
+        {/* Hero Section */}
+        <section className="bg-white border-b border-gray-200 py-8">
+          <div className="max-w-container-max mx-auto px-gutter space-y-2">
+            <nav className="flex items-center gap-2 text-xs text-textSecondary font-semibold">
+              <Link href="/" className="hover:text-primary transition-colors">হোম</Link>
+              <span className="material-symbols-outlined text-xs">chevron_right</span>
+              <Link href="/search" className="hover:text-primary transition-colors">গাড়ি খুঁজুন</Link>
+              <span className="material-symbols-outlined text-xs">chevron_right</span>
+              <span className="text-textPrimary">{displayDistrict}</span>
+            </nav>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-textPrimary font-outfit">
+              {displayDistrict}-এ বিক্রির জন্য গাড়ি
+            </h1>
+            <p className="text-xs md:text-sm text-textSecondary font-medium">
+              {displayDistrict} জেলার ভেরিফাইড গাড়ি ও ডিলারদের স্টক ব্রাউজ করুন।
+            </p>
+          </div>
+        </section>
+
+        <Suspense fallback={
+          <div className="max-w-container-max mx-auto px-gutter py-12 text-center text-textSecondary font-semibold">
+            লোডিং হচ্ছে...
+          </div>
+        }>
+          <DistrictSearchContentWrapper district={displayDistrict} />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // ROUTE 2: Otherwise render Vehicle Detail page
+  let listing = await getListing(pathParam);
 
   if (!listing) {
-    listing = MOCK_LISTINGS.find(l => l.slug === slug) || null;
+    listing = MOCK_LISTINGS.find(l => l.slug === pathParam) || null;
   }
 
   if (!listing) {
-    // Show mock fallback instead of notFound to guarantee preview URL loads
     listing = MOCK_LISTINGS[0];
   }
 
@@ -127,8 +188,13 @@ export default async function VehicleDetailPage({ params }: { params: { make: st
     },
   };
 
+  const seoTitle = `${listing.title} কিনুন - Garisale`;
+  const seoDescription = `${listing.district}-এ বিক্রির জন্য ${listing.title} এর দাম, স্পেসিফিকেশন ও ফিচার দেখুন।`;
+
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
+      <title>{seoTitle}</title>
+      <meta name="description" content={seoDescription} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
