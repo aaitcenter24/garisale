@@ -230,6 +230,35 @@ export class MarketplaceService {
     return listingObj;
   }
 
+  async findOneDealerBySlug(slug: string) {
+    const dealer = await this.prisma.dealership.findUnique({
+      where: { slug },
+    });
+    if (!dealer) {
+      throw new NotFoundException('DEALER_NOT_FOUND');
+    }
+    const listings = await this.prisma.marketplaceListing.findMany({
+      where: { dealership_id: dealer.id, status: 'active' },
+      include: {
+        vehicle: {
+          select: {
+            id: true,
+            make: true,
+            model: true,
+            year: true,
+            description: true,
+            photos: true,
+          },
+        },
+      },
+    });
+    return {
+      dealer,
+      listings: listings.map(l => this.stripPrivateFields(l)),
+      listing_count: listings.length,
+    };
+  }
+
   async createLead(data: any) {
     const dealer = await this.prisma.dealership.findUnique({
       where: { id: data.dealership_id },

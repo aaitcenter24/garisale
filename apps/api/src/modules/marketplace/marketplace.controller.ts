@@ -17,6 +17,12 @@ export class MarketplaceController {
     return { success: true, data };
   }
 
+  @Get('dealers/:slug')
+  async findOneDealerBySlug(@Param('slug') slug: string) {
+    const data = await this.marketplaceService.findOneDealerBySlug(slug);
+    return { success: true, data };
+  }
+
   @Post('leads')
   @HttpCode(HttpStatus.CREATED)
   async createLead(@Body() body: any) {
