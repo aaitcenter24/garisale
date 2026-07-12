@@ -176,6 +176,19 @@ export class MarketplaceService {
             photos: true,
           },
         },
+        dealership: {
+          select: {
+            id: true,
+            business_name: true,
+            slug: true,
+            logo_url: true,
+            rating: true,
+            review_count: true,
+            created_at: true,
+            phone: true,
+            whatsapp_number: true,
+          },
+        },
       },
     });
 
