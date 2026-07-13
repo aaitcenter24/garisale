@@ -42,6 +42,11 @@ export default function LeadPipelineCRM() {
   const [sortBy, setSortBy] = useState<'score' | 'date' | 'stage'>('score');
   const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [leadsScope, setLeadsScope] = useState<'my' | 'all'>('my');
+  const [showLostReasonModal, setShowLostReasonModal] = useState(false);
+  const [lostLeadId, setLostLeadId] = useState<string | null>(null);
+  const [lostReason, setLostReason] = useState('দামে মেলেনি (Price)');
+  const [pendingStage, setPendingStage] = useState<Lead['stage'] | null>(null);
 
   // Form states for new lead
   const [newLeadName, setNewLeadName] = useState('');
@@ -103,6 +108,25 @@ export default function LeadPipelineCRM() {
     setNewLeadName('');
     setNewLeadPhone('');
     setShowAddLeadModal(false);
+  };
+
+  const handleMoveStage = (leadId: string, newStage: Lead['stage']) => {
+    if (newStage === 'Lost') {
+      setLostLeadId(leadId);
+      setPendingStage(newStage);
+      setShowLostReasonModal(true);
+    } else {
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
+    }
+  };
+
+  const handleLostReasonSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lostLeadId || !pendingStage) return;
+    setLeads(prev => prev.map(l => l.id === lostLeadId ? { ...l, stage: pendingStage } : l));
+    setShowLostReasonModal(false);
+    setLostLeadId(null);
+    setPendingStage(null);
   };
 
   // Avatar priority color helpers
@@ -201,6 +225,26 @@ export default function LeadPipelineCRM() {
             <h1 className="font-extrabold text-base text-[#111827] font-outfit">লিড পাইপলাইন / CRM</h1>
             
             <div className="flex items-center gap-3">
+              {/* Scope Toggle (RBAC context: Salesperson default = My Leads only) */}
+              <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-[10px] font-bold">
+                <button
+                  onClick={() => setLeadsScope('my')}
+                  className={`px-3 py-1.5 rounded-md transition-all ${
+                    leadsScope === 'my' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-[#6B7280]'
+                  }`}
+                >
+                  My Leads
+                </button>
+                <button
+                  onClick={() => setLeadsScope('all')}
+                  className={`px-3 py-1.5 rounded-md transition-all ${
+                    leadsScope === 'all' ? 'bg-[#2563EB] text-white shadow-sm' : 'text-[#6B7280]'
+                  }`}
+                >
+                  All Leads
+                </button>
+              </div>
+
               {/* View Toggle */}
               <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
                 <button
@@ -344,7 +388,15 @@ export default function LeadPipelineCRM() {
                 {stages.map((stage) => {
                   const stageLeads = leads.filter(l => l.stage === stage);
                   return (
-                    <div key={stage} className="w-72 bg-gray-50/50 rounded-2xl border border-[#E5E7EB] flex flex-col shrink-0">
+                    <div 
+                      key={stage} 
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        const leadId = e.dataTransfer.getData('text/plain');
+                        handleMoveStage(leadId, stage);
+                      }}
+                      className="w-72 bg-gray-50/50 rounded-2xl border border-[#E5E7EB] flex flex-col shrink-0"
+                    >
                       {/* Column Header */}
                       <div className="p-4 border-b border-[#E5E7EB] bg-white rounded-t-2xl flex items-center justify-between font-bold text-xs text-[#111827]">
                         <span>{stage}</span>
@@ -356,11 +408,20 @@ export default function LeadPipelineCRM() {
                       {/* Leads Column Stack */}
                       <div className="flex-1 p-3 space-y-3 overflow-y-auto">
                         {stageLeads.map((lead) => (
-                          <div key={lead.id} className="bg-white p-4 rounded-xl border border-[#E5E7EB] shadow-sm space-y-3 hover:shadow-md transition-shadow relative">
+                          <div 
+                            key={lead.id} 
+                            draggable="true"
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', lead.id);
+                            }}
+                            className="bg-white p-4 rounded-xl border border-[#E5E7EB] shadow-sm space-y-3 hover:shadow-md transition-shadow relative cursor-grab active:cursor-grabbing"
+                          >
                             {/* Score badge & Name */}
                             <div className="flex justify-between items-start">
                               <span className="font-bold text-[#111827] text-xs">{lead.name}</span>
-                              <span className={`text-[10px] font-bold ${getScoreColor(lead.score)}`}>
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm ${
+                                lead.score > 70 ? 'bg-red-500' : 'bg-orange-500'
+                              }`}>
                                 {toBengaliDigits(lead.score)}
                               </span>
                             </div>
@@ -454,6 +515,43 @@ export default function LeadPipelineCRM() {
                 className="w-full h-10 bg-[#2563EB] text-white rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-xs shadow-md mt-2"
               >
                 লিড যুক্ত করুন
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Mandatory Lost Reason Modal */}
+      {showLostReasonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="border-b pb-3">
+              <h3 className="font-extrabold text-base text-[#111827] font-outfit text-red-600">🚨 Lost হওয়ার কারণ নির্বাচন করুন</h3>
+              <p className="text-[10px] text-[#6B7280] font-bold mt-1">লিডটি হারিয়ে যাওয়ার কারণ জানানো বাধ্যতামূলক।</p>
+            </div>
+            
+            <form onSubmit={handleLostReasonSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">কারণ (Reason)</label>
+                <select
+                  required
+                  value={lostReason}
+                  onChange={(e) => setLostReason(e.target.value)}
+                  className="w-full h-11 bg-white border border-[#E5E7EB] rounded-xl px-2 text-xs text-[#111827] font-bold focus:ring-1 focus:ring-red-500 focus:outline-none"
+                >
+                  <option value="দামে মেলেনি (Price)">দামে মেলেনি (Price)</option>
+                  <option value="অন্য ব্র্যান্ড কিনেছে (Bought Else)">অন্য ব্র্যান্ড কিনেছে (Bought Else)</option>
+                  <option value="লোন অনুমোদন হয়নি (Finance Rejected)">লোন অনুমোদন হয়নি (Finance Rejected)</option>
+                  <option value="যোগাযোগ করা যায়নি (Ghosted)">যোগাযোগ করা যায়নি (Ghosted)</option>
+                  <option value="অন্যান্য (Other)">অন্যান্য (Other)</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all text-xs shadow-md"
+              >
+                নিশ্চিত করুন (Confirm)
               </button>
             </form>
           </div>

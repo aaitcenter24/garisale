@@ -17,12 +17,13 @@ export default function DealerOSDashboard() {
   const [email, setEmail] = useState('owner@dhakamotors.com');
   const [password, setPassword] = useState('password123');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'leads' | 'deals' | 'more'>('dashboard');
+  const [lang, setLang] = useState<'EN' | 'BN'>('BN');
 
   const user = {
     name: 'তানভীর',
     role: 'Owner',
     dealership: 'Dhaka Premium Motors',
-    plan: 'Professional'
+    plan: 'Starter'
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -171,7 +172,7 @@ export default function DealerOSDashboard() {
           {/* Bottom components */}
           <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
             <div className="flex items-center justify-between">
-              <span className="bg-blue-50 text-[#2563EB] border border-blue-100 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+              <span className="border border-[#2563EB] text-[#2563EB] bg-blue-50/50 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {user.plan} Plan
               </span>
               <button className="text-[10px] font-bold text-[#2563EB] hover:underline">
@@ -179,6 +180,24 @@ export default function DealerOSDashboard() {
               </button>
             </div>
             
+            <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 bg-gray-50 p-1.5 rounded-lg border">
+              <span>ভাষা / Language:</span>
+              <div className="flex gap-1.5">
+                <button 
+                  onClick={() => setLang('EN')} 
+                  className={`px-1.5 py-0.5 rounded ${lang === 'EN' ? 'bg-[#2563EB] text-white' : 'hover:bg-gray-200'}`}
+                >
+                  EN
+                </button>
+                <button 
+                  onClick={() => setLang('BN')} 
+                  className={`px-1.5 py-0.5 rounded ${lang === 'BN' ? 'bg-[#2563EB] text-white' : 'hover:bg-gray-200'}`}
+                >
+                  বাংলা
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gray-100 text-[#111827] flex items-center justify-center font-bold text-xs">
                 TR
@@ -290,6 +309,20 @@ export default function DealerOSDashboard() {
               <button className="text-xs font-bold text-[#2563EB] hover:underline flex items-center gap-1">
                 এখনই দেখুন →
               </button>
+            </div>
+
+            {/* Urgent Aging Stock Warning Card */}
+            <div className="bg-red-50 border border-red-200 p-4 rounded-2xl shadow-sm flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-red-700">
+                <span className="material-symbols-outlined text-red-600 text-[20px]">warning</span>
+                <span className="text-xs font-bold">🚨 জরুরি: SK-202501-0012 লটে ৯২ দিন ধরে আছে</span>
+              </div>
+              <Link 
+                href="/dashboard/inventory" 
+                className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-700 active:scale-95 transition-all"
+              >
+                ব্যবস্থা নিন
+              </Link>
             </div>
 
             {/* Recent Activity Feed */}

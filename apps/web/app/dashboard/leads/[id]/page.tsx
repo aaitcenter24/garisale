@@ -52,6 +52,16 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   ]);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
 
+  // Follow-up & Lost modal states
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState('2026-07-18');
+  const [followUpTime, setFollowUpTime] = useState('15:00');
+  const [followUpChannel, setFollowUpChannel] = useState('WhatsApp');
+  const [followUpInfo, setFollowUpInfo] = useState<string | null>(null);
+
+  const [showLostReasonModal, setShowLostReasonModal] = useState(false);
+  const [lostReason, setLostReason] = useState('দামে মেলেনি (Price)');
+
   const handleAddNote = () => {
     if (!noteText.trim()) return;
     setNotes([noteText, ...notes]);
@@ -110,9 +120,10 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               📞 {lead.phone}
             </Link>
           </div>
-          <div className="flex justify-center gap-2 text-[10px] font-bold text-[#6B7280]">
+          <div className="flex justify-center gap-2 text-[10px] font-bold text-[#6B7280] flex-wrap">
             <span className="bg-gray-100 px-2.5 py-1 rounded-full">{lead.source}</span>
             <span className="bg-gray-100 px-2.5 py-1 rounded-full">{lead.timeInStage}</span>
+            <span className="bg-blue-50 text-[#2563EB] px-2.5 py-1 rounded-full">বাজেট: BDT ১০L – ১৫L</span>
           </div>
         </section>
 
@@ -129,18 +140,28 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           </Link>
 
           {/* Row 2: Secondary call and followups */}
-          <div className="grid grid-cols-2 gap-3">
-            <Link 
-              href={`tel:${lead.phone}`}
-              className="h-12 bg-white border border-[#E5E7EB] text-[#111827] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all text-xs shadow-sm"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#6B7280]">call</span>
-              📞 Call করুন
-            </Link>
-            <button className="h-12 bg-white border border-[#E5E7EB] text-[#111827] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all text-xs shadow-sm">
-              <span className="material-symbols-outlined text-[16px] text-[#6B7280]">calendar_month</span>
-              📅 Follow-up সেট করুন
-            </button>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
+              <Link 
+                href={`tel:${lead.phone}`}
+                className="h-12 bg-white border border-[#E5E7EB] text-[#111827] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all text-xs shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[16px] text-[#6B7280]">call</span>
+                📞 Call করুন
+              </Link>
+              <button 
+                onClick={() => setShowFollowUpModal(true)}
+                className="h-12 bg-white border border-[#E5E7EB] text-[#111827] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 active:scale-95 transition-all text-xs shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[16px] text-[#6B7280]">calendar_month</span>
+                📅 Follow-up সেট করুন
+              </button>
+            </div>
+            {followUpInfo && (
+              <div className="bg-[#EFF6FF] border border-blue-100 p-2.5 rounded-lg text-[10px] font-bold text-[#2563EB] text-center animate-in slide-in-from-top-1">
+                {followUpInfo}
+              </div>
+            )}
           </div>
         </section>
 
@@ -231,18 +252,22 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           </button>
 
           {showScoreBreakdown && (
-            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-1.5 text-[10px] text-[#6B7280] font-semibold animate-in slide-in-from-top-2 duration-200">
-              <div className="flex justify-between">
-                <span>১. মার্কেটপ্লেস ভিজিট প্রোফাইল:</span>
-                <span className="text-[#111827]">{toBengaliDigits(40)} পয়েন্ট</span>
+            <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 space-y-2 text-[10px] text-[#6B7280] font-semibold animate-in slide-in-from-top-2 duration-200">
+              <div className="flex justify-between items-center">
+                <span>+30 Enquiry submitted</span>
+                <span className="text-green-600 font-bold">✓</span>
               </div>
-              <div className="flex justify-between">
-                <span>২. একই ধরনের বিজ্ঞাপন সার্চ:</span>
-                <span className="text-[#111827]">{toBengaliDigits(25)} পয়েন্ট</span>
+              <div className="flex justify-between items-center">
+                <span>+20 Phone revealed</span>
+                <span className="text-green-600 font-bold">✓</span>
               </div>
-              <div className="flex justify-between">
-                <span>৩. ফোন নম্বর যাচাইকরণ:</span>
-                <span className="text-[#111827]">{toBengaliDigits(20)} পয়েন্ট</span>
+              <div className="flex justify-between items-center">
+                <span>+15 Vehicle viewed 3x</span>
+                <span className="text-green-600 font-bold">✓</span>
+              </div>
+              <div className="flex justify-between items-center border-t pt-1.5 font-bold">
+                <span>Score: {lead.score}/200</span>
+                <span className="text-[#2563EB]">Active</span>
               </div>
             </div>
           )}
@@ -305,10 +330,114 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             <span className="material-symbols-outlined text-[18px]">verified</span>
             ডিলে পরিণত করুন
           </button>
-          <button className="block w-full text-center text-[10px] font-bold text-red-600 hover:underline">
+          <button 
+            onClick={() => setShowLostReasonModal(true)}
+            className="block w-full text-center text-[10px] font-bold text-red-600 hover:underline"
+          >
             Lost হিসেবে মার্ক করুন
           </button>
         </section>
+
+      </main>
+
+      {/* Follow-up Scheduler Modal */}
+      {showFollowUpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="border-b pb-3">
+              <h3 className="font-extrabold text-base text-[#111827] font-outfit">📅 Follow-up সেট করুন</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold text-[#6B7280] uppercase">তারিখ</span>
+                  <input 
+                    type="date" 
+                    value={followUpDate} 
+                    onChange={e => setFollowUpDate(e.target.value)} 
+                    className="w-full h-10 border rounded px-2 text-xs focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold text-[#6B7280] uppercase">সময়</span>
+                  <input 
+                    type="time" 
+                    value={followUpTime} 
+                    onChange={e => setFollowUpTime(e.target.value)} 
+                    className="w-full h-10 border rounded px-2 text-xs focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-bold text-[#6B7280] uppercase">চ্যানেল (Channel)</span>
+                <select 
+                  value={followUpChannel} 
+                  onChange={e => setFollowUpChannel(e.target.value)}
+                  className="w-full h-10 border rounded px-2 text-xs focus:outline-none"
+                >
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Call">Call</option>
+                  <option value="SMS">SMS</option>
+                </select>
+              </div>
+              <button
+                onClick={() => {
+                  setFollowUpInfo(`📅 Follow-up সেট: শনিবার বিকেল ৩টা (${followUpChannel} দ্বারা)`);
+                  setShowFollowUpModal(false);
+                }}
+                className="w-full h-10 bg-[#2563EB] text-white rounded-xl font-bold text-xs shadow-md"
+              >
+                নিশ্চিত করুন (Save)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mandatory Lost Reason Modal */}
+      {showLostReasonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="border-b pb-3">
+              <h3 className="font-extrabold text-base text-[#111827] font-outfit text-red-600">🚨 Lost হওয়ার কারণ নির্বাচন করুন</h3>
+              <p className="text-[10px] text-[#6B7280] font-bold mt-1">লিডটি হারিয়ে যাওয়ার কারণ জানানো বাধ্যতামূলক।</p>
+            </div>
+            
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                setLead({ ...lead, stage: 'Lost' });
+                setShowLostReasonModal(false);
+                alert(`লিডটিকে '${lostReason}' কারণে Lost হিসেবে চিহ্নিত করা হয়েছে।`);
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">কারণ (Reason)</label>
+                <select
+                  required
+                  value={lostReason}
+                  onChange={(e) => setLostReason(e.target.value)}
+                  className="w-full h-11 bg-white border border-[#E5E7EB] rounded-xl px-2 text-xs text-[#111827] font-bold focus:ring-1 focus:ring-red-500 focus:outline-none"
+                >
+                  <option value="দামে মেলেনি (Price)">দামে মেলেনি (Price)</option>
+                  <option value="অন্য ব্র্যান্ড কিনেছে (Bought Else)">অন্য ব্র্যান্ড কিনেছে (Bought Else)</option>
+                  <option value="লোন অনুমোদন হয়নি (Finance Rejected)">লোন অনুমোদন হয়নি (Finance Rejected)</option>
+                  <option value="যোগাযোগ করা যায়নি (Ghosted)">যোগাযোগ করা যায়নি (Ghosted)</option>
+                  <option value="অন্যান্য (Other)">অন্যান্য (Other)</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all text-xs shadow-md"
+              >
+                নিশ্চিত করুন (Confirm)
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       </main>
     </div>

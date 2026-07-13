@@ -39,6 +39,31 @@ export default function DealSheetPage({ params }: { params: { id: string } }) {
   const discountThresholdPct = 5; // 5% discount threshold
 
   const originalPrice = 1450000;
+  const acquisitionCost = 1100000;
+  const reconCost = 80000;
+
+  const [dealType, setDealType] = useState<'Cash' | 'Finance' | 'Exchange' | 'ExchangeCash'>('Finance');
+  const [userRole, setUserRole] = useState<'Owner' | 'Manager' | 'Salesperson'>('Owner');
+
+  // Finance states
+  const [lenderName, setLenderName] = useState('Mutual Trust Bank');
+  const [loanAmount, setLoanAmount] = useState<number>(1000000);
+  const [interestRate, setInterestRate] = useState<number>(9.5);
+  const [loanTerm, setLoanTerm] = useState<number>(60);
+
+  // Trade-in states
+  const [tradeInDesc, setTradeInDesc] = useState('Toyota Corolla 2012');
+  const [tradeInValue, setTradeInValue] = useState<number>(450000);
+
+  const monthlyInstalment = useMemo(() => {
+    if (loanAmount <= 0 || interestRate <= 0 || loanTerm <= 0) return 0;
+    const r = (interestRate / 12) / 100;
+    return (loanAmount * r * Math.pow(1 + r, loanTerm)) / (Math.pow(1 + r, loanTerm) - 1);
+  }, [loanAmount, interestRate, loanTerm]);
+
+  const grossProfit = useMemo(() => {
+    return salePrice - acquisitionCost - reconCost;
+  }, [salePrice]);
 
   // Payments log state
   const [payments, setPayments] = useState<Payment[]>([
@@ -138,7 +163,22 @@ export default function DealSheetPage({ params }: { params: { id: string } }) {
               );
             })}
           </div>
-        </section>
+            {/* Role Switcher for Testing (Section 2.10 RBAC) */}
+            <div className="flex bg-gray-50 border p-2 rounded-xl text-[10px] font-bold justify-between items-center">
+              <span className="text-[#6B7280]">Role-Based Access:</span>
+              <div className="flex gap-2">
+                {(['Owner', 'Manager', 'Salesperson'] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setUserRole(r)}
+                    className={`px-2 py-0.5 rounded transition-all ${userRole === r ? 'bg-slate-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-200'}`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
 
         {/* Vehicle Section */}
         <section className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-sm flex gap-4 items-center">
@@ -152,6 +192,31 @@ export default function DealSheetPage({ params }: { params: { id: string } }) {
             <span className="inline-block bg-[#DCFCE7] text-[#16A34A] text-[9px] font-bold px-2 py-0.5 rounded mt-1">
               Great Deal (IMV)
             </span>
+          </div>
+        </section>
+
+        {/* Deal Type selector (💵 Cash, 🏦 Finance, 🔄 Exchange, 🔄+ Exchange+Cash) */}
+        <section className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-3">
+          <span className="block text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">ডিল টাইপ নির্বাচন করুন</span>
+          <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+            {[
+              { id: 'Cash', label: '💵 Cash' },
+              { id: 'Finance', label: '🏦 Finance' },
+              { id: 'Exchange', label: '🔄 Exchange' },
+              { id: 'ExchangeCash', label: '🔄+ Exchange+Cash' }
+            ].map((type) => (
+              <button
+                key={type.id}
+                onClick={() => setDealType(type.id as any)}
+                className={`py-2 px-3 border rounded-xl transition-all text-center ${
+                  dealType === type.id
+                    ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-sm'
+                    : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:bg-gray-50'
+                }`}
+              >
+                {type.label}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -178,10 +243,97 @@ export default function DealSheetPage({ params }: { params: { id: string } }) {
             </div>
             <div className="space-y-1">
               <span className="text-[#6B7280] block text-[10px] uppercase">ডিল টাইপ</span>
-              <span className="font-bold text-[#111827] text-sm">Retail (Bank Loan)</span>
+              <span className="font-bold text-[#111827] text-sm">{dealType}</span>
             </div>
           </div>
         </section>
+
+        {/* Finance Section (show only if Finance selected) */}
+        {(dealType === 'Finance') && (
+          <section className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4 animate-in fade-in duration-200">
+            <h3 className="font-bold text-xs text-[#6B7280] uppercase tracking-wider border-b pb-2">🏦 ফাইন্যান্স সংক্রান্ত তথ্য</h3>
+            
+            <div className="space-y-3 text-xs font-semibold">
+              <div className="space-y-1">
+                <span className="text-[#6B7280] block text-[9px] uppercase">ব্যাংক / ঋণদানকারী সংস্থা</span>
+                <input 
+                  type="text" 
+                  value={lenderName} 
+                  onChange={e => setLenderName(e.target.value)} 
+                  className="w-full h-10 border rounded-lg px-3 text-xs focus:ring-1 focus:ring-[#2563EB]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[#6B7280] block text-[9px] uppercase">ঋণের পরিমাণ (BDT)</span>
+                  <input 
+                    type="number" 
+                    value={loanAmount} 
+                    onChange={e => setLoanAmount(Number(e.target.value))} 
+                    className="w-full h-10 border rounded-lg px-3 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[#6B7280] block text-[9px] uppercase">সুদের হার (%)</span>
+                  <input 
+                    type="number" 
+                    step="0.1" 
+                    value={interestRate} 
+                    onChange={e => setInterestRate(Number(e.target.value))} 
+                    className="w-full h-10 border rounded-lg px-3 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <span className="text-[#6B7280] block text-[9px] uppercase">কিস্তির মেয়াদ (মাস)</span>
+                  <input 
+                    type="number" 
+                    value={loanTerm} 
+                    onChange={e => setLoanTerm(Number(e.target.value))} 
+                    className="w-full h-10 border rounded-lg px-3 text-xs"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[#6B7280] block text-[9px] uppercase">মাসিক কিস্তি (EMI)</span>
+                  <span className="font-extrabold text-[#2563EB] text-sm block h-10 flex items-center">
+                    {formatBDT(Math.round(monthlyInstalment))} / মাস
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Trade-in section (show only if Exchange selected) */}
+        {(dealType === 'Exchange' || dealType === 'ExchangeCash') && (
+          <section className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4 animate-in fade-in duration-200">
+            <h3 className="font-bold text-xs text-[#6B7280] uppercase tracking-wider border-b pb-2">🔄 এক্সচেঞ্জ সংক্রান্ত তথ্য</h3>
+            
+            <div className="space-y-3 text-xs font-semibold">
+              <div className="space-y-1">
+                <span className="text-[#6B7280] block text-[9px] uppercase">বিনিময়কৃত গাড়ির বিবরণ</span>
+                <input 
+                  type="text" 
+                  value={tradeInDesc} 
+                  onChange={e => setTradeInDesc(e.target.value)} 
+                  className="w-full h-10 border rounded-lg px-3 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[#6B7280] block text-[9px] uppercase">বিনিময় মূল্য (Trade-in Value BDT)</span>
+                <input 
+                  type="number" 
+                  value={tradeInValue} 
+                  onChange={e => setTradeInValue(Number(e.target.value))} 
+                  className="w-full h-10 border rounded-lg px-3 text-xs"
+                />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Payment Log */}
         <section className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4">
@@ -214,6 +366,16 @@ export default function DealSheetPage({ params }: { params: { id: string } }) {
             <span className={`text-sm ${balanceDue <= 0 ? 'text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded' : 'text-red-600 bg-red-50 px-2 py-0.5 rounded'}`}>
               {balanceDue <= 0 ? 'Paid ✓' : formatBDT(balanceDue)}
             </span>
+          </div>
+
+          {/* Gross Profit row (Owner only, hidden for others) */}
+          <div className="flex justify-between items-center pt-2.5 text-xs font-bold border-t border-dashed border-gray-200">
+            <span>মোট গ্রস প্রফিট (Gross Profit)</span>
+            {userRole === 'Owner' ? (
+              <span className="text-emerald-600 font-extrabold text-sm">{formatBDT(grossProfit)}</span>
+            ) : (
+              <span className="text-gray-400 font-bold">—</span>
+            )}
           </div>
         </section>
 

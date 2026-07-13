@@ -327,9 +327,10 @@ export default function AddVehicleWizard() {
                     onChange={e => setAcqSource(e.target.value)}
                     className="w-full h-10 border border-[#E5E7EB] rounded-lg px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                   >
-                    <option value="Auction">Auction</option>
-                    <option value="Local Trade-in">Local Trade-in</option>
-                    <option value="Import">Import</option>
+                    <option value="Auction">নিলাম</option>
+                    <option value="Local Trade-in">ট্রেড-ইন</option>
+                    <option value="Direct Purchase">সরাসরি ক্রয়</option>
+                    <option value="Import">আমদানি</option>
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -447,7 +448,7 @@ export default function AddVehicleWizard() {
                 <div className="flex justify-between items-center text-xs font-bold border-b pb-2">
                   <span>আপলোডকৃত ছবিসমূহ ({toBengaliDigits(photos.length)}টি)</span>
                   <span className={photos.length >= 4 ? 'text-green-600' : 'text-orange-500'}>
-                    {toBengaliDigits(photos.length)}/৪ ন্যূনতম ছবি
+                    {toBengaliDigits(photos.length)}/৪ ন্যূনতম ছবি আপলোড করা হয়েছে
                   </span>
                 </div>
 
@@ -528,9 +529,9 @@ export default function AddVehicleWizard() {
 
               {/* Feature Chips multi-select */}
               <div className="space-y-2 pt-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">অতিরিক্ত ফিচারসমূহ</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">গাড়ির বৈশিষ্ট্য</label>
                 <div className="flex flex-wrap gap-2">
-                  {['ABS', 'Leather Seats', 'Sunroof', 'Alloy Rims', 'Back Camera', 'Push Start'].map((feat) => {
+                  {['Air Conditioning', 'Airbags', 'Alloy Wheels', 'Reverse Camera', 'Push Start', 'Leather Seats', 'Sunroof', 'CNG Converted'].map((feat) => {
                     const isSelected = selectedFeatures.includes(feat);
                     return (
                       <button
@@ -578,7 +579,10 @@ export default function AddVehicleWizard() {
           ) : (
             <button 
               onClick={handlePublishSubmit}
-              className="px-6 h-11 bg-[#16A34A] text-white rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-xs shadow-md flex items-center gap-1 ml-auto"
+              disabled={photos.length < 4}
+              className={`px-6 h-11 text-white rounded-lg font-bold transition-all text-xs shadow-md flex items-center gap-1 ml-auto ${
+                photos.length < 4 ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-[#16A34A] hover:brightness-110 active:scale-95'
+              }`}
             >
               <span className="material-symbols-outlined text-[16px]">publish</span>
               সেভ ও প্রকাশ করুন

@@ -26,6 +26,9 @@ interface LogEntry {
 export default function AutomationHubPage() {
   const router = useRouter();
   const [activeChannel, setActiveChannel] = useState<'whatsapp' | 'facebook' | 'social' | 'marketing' | 'logs'>('whatsapp');
+  const [festivalMode, setFestivalMode] = useState(false);
+  const [overrideFestival, setOverrideFestival] = useState(false);
+  const [marketingRole, setMarketingRole] = useState<'Owner' | 'Salesperson'>('Owner');
 
   // WhatsApp states
   const [waGreetingOn, setWaGreetingOn] = useState(true);
@@ -171,6 +174,43 @@ export default function AutomationHubPage() {
             {/* WHATSAPP TAB VIEW */}
             {activeChannel === 'whatsapp' && (
               <div className="space-y-6 animate-in fade-in duration-300">
+                
+                {/* Festival Mode Card */}
+                <div className="bg-amber-50/60 border border-amber-200 p-5 rounded-2xl shadow-sm space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-amber-800">
+                      <span className="material-symbols-outlined text-amber-600">festival</span>
+                      <h4 className="font-extrabold text-xs uppercase tracking-wider">🎉 উৎসব মোড (Festival Mode)</h4>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                        type="checkbox" 
+                        checked={festivalMode} 
+                        onChange={e => setFestivalMode(e.target.checked)} 
+                        className="sr-only peer" 
+                      />
+                      <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                    </label>
+                  </div>
+                  <p className="text-[11px] text-amber-700 leading-relaxed font-semibold">
+                    ঈদের সময় অটোমেশন বন্ধ থাকবে (Day 0 ছাড়া)
+                  </p>
+                  {festivalMode && (
+                    <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-amber-100 text-[10px] font-bold text-amber-800 animate-in slide-in-from-top-1">
+                      <span>উৎসবের সময়ও অটোমেশন চালু রাখতে চান?</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] text-[#6B7280]">চালু রাখুন</span>
+                        <input 
+                          type="checkbox" 
+                          checked={overrideFestival} 
+                          onChange={e => setOverrideFestival(e.target.checked)} 
+                          className="rounded text-amber-600 focus:ring-amber-500" 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Connection Status Card */}
                 <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex items-center justify-between gap-4">
                   <div className="space-y-1">
@@ -183,6 +223,17 @@ export default function AutomationHubPage() {
                   <button className="bg-gray-100 text-[#111827] px-3.5 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition-all">
                     Reconnect
                   </button>
+                </div>
+
+                {/* Rate Limit Usage Bar */}
+                <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-[#111827]">WhatsApp: ৪২০/১,০০০ বার্তা ব্যবহৃত আজ</span>
+                    <span className="text-gray-500">{toBengaliDigits(42)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-green-600 h-full transition-all" style={{ width: '42%' }} />
+                  </div>
                 </div>
 
                 {/* Rule Cards */}
@@ -414,6 +465,78 @@ export default function AutomationHubPage() {
             {/* MARKETING TAB VIEW */}
             {activeChannel === 'marketing' && (
               <div className="space-y-6 animate-in fade-in duration-300">
+                
+                {/* Marketing Tab RBAC Role Switcher */}
+                <div className="bg-white p-4 rounded-xl border border-[#E5E7EB] flex justify-between items-center text-xs font-bold shadow-sm">
+                  <span className="text-[#6B7280]">Role-Based Access:</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setMarketingRole('Owner')}
+                      className={`px-3 py-1 rounded-md transition-all ${marketingRole === 'Owner' ? 'bg-slate-900 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      Owner
+                    </button>
+                    <button 
+                      onClick={() => setMarketingRole('Salesperson')}
+                      className={`px-3 py-1 rounded-md transition-all ${marketingRole === 'Salesperson' ? 'bg-slate-900 text-white shadow-sm' : 'bg-gray-100 text-gray-500'}`}
+                    >
+                      Salesperson
+                    </button>
+                  </div>
+                </div>
+
+                {/* SMS Campaign Builder (Owner Only) */}
+                {marketingRole === 'Owner' ? (
+                  <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4 animate-in fade-in duration-200">
+                    <h3 className="font-extrabold text-xs text-[#6B7280] uppercase tracking-wider border-b pb-2">💬 SMS Campaign Builder</h3>
+                    
+                    <div className="space-y-3 text-xs font-semibold">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-[#6B7280] uppercase">ক্যাম্পেইন নাম</label>
+                        <input type="text" placeholder="যেমন: Eid Special Offer" className="w-full h-10 border rounded-lg px-3 text-xs focus:ring-1 focus:ring-[#2563EB] focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-[#6B7280] uppercase">টার্গেট গ্রাহক (Audience)</label>
+                        <select className="w-full h-10 border rounded-lg px-2 text-xs focus:outline-none bg-white">
+                          <option>সব অ্যাক্টিভ লিড (All Active Leads)</option>
+                          <option>শুধু Hot Leads (&gt;70 Score)</option>
+                          <option>বিগত ৩০ দিনের পুরাতন ক্রেতা</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-[#6B7280] uppercase">মেসেজ কন্টেন্ট</label>
+                        <textarea placeholder="যেমন: ঢাকা প্রিমিয়াম মটরস-এ ঈদ স্পেশাল অফার! আজই ভিজিট করুন..." className="w-full p-3 border rounded-lg text-xs min-h-[60px] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"></textarea>
+                      </div>
+                      
+                      {/* Rate limit usage bar for SMS channel */}
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between items-center text-[10px] text-[#6B7280] font-bold">
+                          <span>SMS কোটা ব্যবহার: ৮৫০/১,০০০ বার্তা আজ</span>
+                          <span>{toBengaliDigits(85)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div className="bg-orange-500 h-full" style={{ width: '85%' }} />
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => alert('SMS ক্যাম্পেইন শুরু করা হয়েছে!')}
+                        className="w-full h-10 bg-[#2563EB] text-white rounded-lg font-bold text-xs shadow-md hover:brightness-110"
+                      >
+                        ক্যাম্পেইন শুরু করুন (Launch Campaign)
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-red-200 p-8 rounded-2xl text-center space-y-2 animate-in fade-in duration-200">
+                    <span className="material-symbols-outlined text-[36px] text-red-500">lock</span>
+                    <h3 className="font-extrabold text-sm text-red-600">Access Restricted</h3>
+                    <p className="text-xs text-[#6B7280] max-w-xs mx-auto">
+                      দুঃখিত, এই মার্কেটিং ক্যাম্পেইন বিল্ডারটি শুধুমাত্র শোরুম Owner-এর জন্য অনুমোদিত।
+                    </p>
+                  </div>
+                )}
+
                 {/* Lead scoring scale graphic */}
                 <div className="bg-white p-5 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4">
                   <h3 className="font-bold text-xs text-[#6B7280] uppercase tracking-wider">লিড স্কোরিং কনফিগারেশন</h3>

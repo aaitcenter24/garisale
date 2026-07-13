@@ -44,6 +44,12 @@ export default function SettingsDashboardPage() {
   const [youtube, setYoutube] = useState('https://youtube.com/c/dhakapremiummotors');
   const [instagram, setInstagram] = useState('https://instagram.com/dhakapremiummotors');
 
+  // Owner controls states
+  const [discountLimitPct, setDiscountLimitPct] = useState(5);
+  const [targetProfitPct, setTargetProfitPct] = useState(12);
+  const [leadAssignment, setLeadAssignment] = useState('Round Robin');
+  const userRole = 'Owner';
+
   // Team state
   const [team, setTeam] = useState<TeamMember[]>([
     { id: '1', name: 'তানভীর রহমান', role: 'Owner', email: 'owner@dhakamotors.com', status: 'Active' },
@@ -176,7 +182,7 @@ export default function SettingsDashboardPage() {
                   <input type="text" value={phone} onChange={e => setPhone(e.target.value)} className="w-full h-10 border border-[#E5E7EB] rounded-lg px-3 text-xs focus:ring-1 focus:ring-[#2563EB] focus:outline-none" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">WhatsApp</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">WhatsApp নম্বর</label>
                   <input type="text" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} className="w-full h-10 border border-[#E5E7EB] rounded-lg px-3 text-xs focus:ring-1 focus:ring-[#2563EB] focus:outline-none" />
                 </div>
               </div>
@@ -207,6 +213,46 @@ export default function SettingsDashboardPage() {
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">Instagram Link</label>
                   <input type="text" value={instagram} onChange={e => setInstagram(e.target.value)} className="w-full h-10 border border-[#E5E7EB] rounded-lg px-3 text-xs focus:ring-1 focus:ring-[#2563EB] focus:outline-none" />
+                </div>
+              </div>
+
+              {/* Businesses Hours section */}
+              <div className="bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm space-y-4 pt-4 border-t">
+                <div className="border-b pb-2 flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-[#111827]">⏰ ব্যবসার সময় (Business Hours)</h3>
+                  <span className="text-[8px] text-[#6B7280] font-mono uppercase">Away messages-এ যাবে</span>
+                </div>
+                
+                <div className="space-y-2.5">
+                  {[
+                    { day: 'Mon', label: 'সোমবার' },
+                    { day: 'Tue', label: 'মঙ্গলবার' },
+                    { day: 'Wed', label: 'বুধবার' },
+                    { day: 'Thu', label: 'বৃহস্পতিবার' },
+                    { day: 'Fri', label: 'শুক্রবার' },
+                    { day: 'Sat', label: 'শনিবার' },
+                    { day: 'Sun', label: 'রবিবার' }
+                  ].map((d) => (
+                    <div key={d.day} className="flex items-center justify-between gap-4 text-xs font-semibold py-1 border-b border-gray-50 last:border-0">
+                      <span className="w-20 text-gray-700">{d.label}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            defaultChecked={d.day !== 'Fri'} 
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563EB]"></div>
+                        </label>
+                        
+                        <div className="flex items-center gap-1">
+                          <input type="time" defaultValue="09:00" className="border rounded px-1.5 py-0.5 text-[10px] focus:outline-none" />
+                          <span className="text-[#6B7280]">-</span>
+                          <input type="time" defaultValue="20:00" className="border rounded px-1.5 py-0.5 text-[10px] focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -248,6 +294,48 @@ export default function SettingsDashboardPage() {
                 </div>
               ))}
             </div>
+
+            {/* Owner settings limits (visible to Owner only) */}
+            {userRole === 'Owner' && (
+              <div className="mt-6 bg-[#EFF6FF]/40 border border-[#2563EB]/20 p-5 rounded-2xl space-y-4 shadow-sm animate-in fade-in duration-200">
+                <div className="border-b pb-2">
+                  <h4 className="font-extrabold text-xs text-[#2563EB] uppercase tracking-wider">⚙️ Owner সেটিংস ও সীমা নির্ধারণ (Owner Settings Only)</h4>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-[#6B7280] uppercase block">ডিসকাউন্ট সীমা (%)</label>
+                    <input 
+                      type="number" 
+                      value={discountLimitPct} 
+                      onChange={e => setDiscountLimitPct(Number(e.target.value))} 
+                      className="w-full h-10 border rounded-lg px-2 text-xs focus:ring-1 focus:ring-[#2563EB] bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-[#6B7280] uppercase block">লক্ষ্যমাত্রা মুনাফা (%)</label>
+                    <input 
+                      type="number" 
+                      value={targetProfitPct} 
+                      onChange={e => setTargetProfitPct(Number(e.target.value))} 
+                      className="w-full h-10 border rounded-lg px-2 text-xs focus:ring-1 focus:ring-[#2563EB] bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold text-[#6B7280] uppercase block">লিড বরাদ্দ পদ্ধতি</label>
+                  <select 
+                    value={leadAssignment} 
+                    onChange={e => setLeadAssignment(e.target.value)}
+                    className="w-full h-10 border rounded-lg px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#2563EB] bg-white font-bold text-[#111827]"
+                  >
+                    <option value="Round Robin">Round Robin</option>
+                    <option value="Manual">Manual</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
