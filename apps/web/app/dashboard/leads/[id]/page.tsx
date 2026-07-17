@@ -14,6 +14,12 @@ function toBengaliDigits(num: number | string): string {
   return String(num).split('').map(char => engToBn[char] || char).join('');
 }
 
+// BDT Price Formatter: e.g. "BDT ১৪,৫০,০০০"
+function formatBDT(amount: number): string {
+  const formatted = amount.toLocaleString('en-US');
+  return `BDT ${toBengaliDigits(formatted)}`;
+}
+
 interface Lead {
   id: string;
   name: string;
