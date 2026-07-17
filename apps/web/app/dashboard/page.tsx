@@ -25,6 +25,12 @@ export default function DealerOSDashboard() {
   const [password, setPassword] = useState('password123');
   const [lang, setLang] = useState<'EN' | 'BN'>('BN');
 
+  const user = {
+    name: 'তানভীর',
+    dealership: 'ঢাকা অটো হাউস',
+    plan: 'Starter'
+  };
+
   // Dev Toggle States
   const [role, setRole] = useState<'Owner' | 'Manager' | 'Salesperson'>('Owner');
   const [loading, setLoading] = useState(false);
