@@ -13,7 +13,7 @@ function toBengaliDigits(num: number | string): string {
   return String(num).split('').map(char => engToBn[char] || char).join('');
 }
 
-// BDT Formatter: e.g. "BDT ১৪,৫০,০০০"
+// BDT Price Formatter: e.g. "BDT ১৪,৫০,০০০"
 function formatBDT(amount: number): string {
   const formatted = amount.toLocaleString('en-US');
   return `BDT ${toBengaliDigits(formatted)}`;
@@ -21,18 +21,18 @@ function formatBDT(amount: number): string {
 
 export default function DealerOSDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [email, setEmail] = useState('owner@dhakamotors.com');
+  const [email, setEmail] = useState('owner@dhakaautohouse.com');
   const [password, setPassword] = useState('password123');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'leads' | 'deals' | 'more'>('dashboard');
   const [lang, setLang] = useState<'EN' | 'BN'>('BN');
 
-  // Global Quality States
+  // Dev Toggle States
   const [role, setRole] = useState<'Owner' | 'Manager' | 'Salesperson'>('Owner');
   const [loading, setLoading] = useState(false);
-  const [apiFailed, setApiFailed] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(false);
-  
-  // Toast notifications array
+  const [isEmptyLeads, setIsEmptyLeads] = useState(false);
+  const [isEmptyVehicles, setIsEmptyVehicles] = useState(false);
+  const [showAgingAlert, setShowAgingAlert] = useState(true);
+
+  // Toast Notification System
   const [toasts, setToasts] = useState<{ id: string; type: 'success' | 'error' | 'info'; message: string }[]>([]);
 
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
@@ -55,23 +55,45 @@ export default function DealerOSDashboard() {
   };
 
   // Stat Counter Animation Simulation
-  const [countVal, setCountVal] = useState(0);
-  useEffect(() => {
-    if (isLoggedIn && !loading && !apiFailed) {
-      let start = 0;
-      const end = 23;
-      const duration = 800; // ms
-      const stepTime = Math.abs(Math.floor(duration / end));
-      const timer = setInterval(() => {
-        start += 1;
-        setCountVal(start);
-        if (start >= end) clearInterval(timer);
-      }, stepTime);
-      return () => clearInterval(timer);
-    }
-  }, [isLoggedIn, loading, apiFailed]);
+  const [countAvailable, setCountAvailable] = useState(0);
+  const [countLeads, setCountLeads] = useState(0);
+  const [countFollowups, setCountFollowups] = useState(0);
 
-  // RENDER STATE 1: Light Theme Login Panel
+  useEffect(() => {
+    if (isLoggedIn && !loading) {
+      let startAvailable = 0;
+      let startLeads = 0;
+      let startFollowups = 0;
+
+      const timer1 = setInterval(() => {
+        startAvailable += 1;
+        setCountAvailable(startAvailable);
+        if (startAvailable >= 23) clearInterval(timer1);
+      }, 30);
+
+      const timer2 = setInterval(() => {
+        startLeads += 2;
+        setCountLeads(startLeads);
+        if (startLeads >= 47) {
+          setCountLeads(47);
+          clearInterval(timer2);
+        }
+      }, 20);
+
+      const timer3 = setInterval(() => {
+        startFollowups += 1;
+        setCountFollowups(startFollowups);
+        if (startFollowups >= 8) clearInterval(timer3);
+      }, 50);
+
+      return () => {
+        clearInterval(timer1);
+        clearInterval(timer2);
+        clearInterval(timer3);
+      };
+    }
+  }, [isLoggedIn, loading]);
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col justify-center items-center p-6 font-sans">
@@ -91,7 +113,7 @@ export default function DealerOSDashboard() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 bg-white border border-[#E5E7EB] rounded-lg px-3 text-[14px] text-[#111827] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-all"
+                className="w-full h-11 bg-white border border-[#E5E7EB] rounded-lg px-3 text-[14px] text-[#111827] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -102,7 +124,7 @@ export default function DealerOSDashboard() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 bg-white border border-[#E5E7EB] rounded-lg px-3 text-[14px] text-[#111827] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-all"
+                className="w-full h-11 bg-white border border-[#E5E7EB] rounded-lg px-3 text-[14px] text-[#111827] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -113,24 +135,6 @@ export default function DealerOSDashboard() {
               ডিলার ওএস-এ লগইন করুন
             </button>
           </form>
-
-          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 space-y-2">
-            <span className="block text-[12px] font-sans font-semibold text-[#6B7280] uppercase tracking-wider">Demo Credentials</span>
-            <div className="grid grid-cols-2 gap-2 text-[12px] text-[#111827] font-semibold">
-              <button 
-                onClick={() => { setEmail('owner@dhakamotors.com'); setPassword('password123'); }}
-                className="bg-white border border-gray-300 py-1.5 rounded-lg hover:bg-gray-50 text-left px-2"
-              >
-                🔑 Owner
-              </button>
-              <button 
-                onClick={() => { setEmail('sales@dhakamotors.com'); setPassword('password123'); }}
-                className="bg-white border border-gray-300 py-1.5 rounded-lg hover:bg-gray-50 text-left px-2"
-              >
-                🔑 Salesperson
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -139,24 +143,24 @@ export default function DealerOSDashboard() {
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex flex-col font-sans pb-20 md:pb-0">
       
-      {/* Impersonation alert & Role switcher */}
-      <div className="bg-slate-900 text-white px-4 py-2.5 text-[12px] font-sans flex flex-col sm:flex-row justify-between items-center z-50 gap-3 shadow-md">
+      {/* Dev Impersonation Bar */}
+      <div className="bg-slate-900 text-white px-4 py-2 text-[12px] font-sans flex flex-col sm:flex-row justify-between items-center z-50 gap-3 shadow-md">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-[16px] text-amber-400">warning</span>
-          <span className="font-semibold text-slate-200">শোরুম: <strong className="text-white">Dhaka Premium Motors</strong></span>
+          <span className="font-semibold text-slate-200">শোরুম: <strong className="text-white">ঢাকা অটো হাউস</strong></span>
           <span className="hidden sm:inline text-slate-500">|</span>
           <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[10px] font-bold">রোল: {role}</span>
         </div>
 
-        {/* Interactive Dev Switchers */}
+        {/* Live Dev Switchers */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] text-slate-400 font-bold uppercase">রোল পরিবর্তন:</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">রোল:</span>
           <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700">
             {['Owner', 'Manager', 'Salesperson'].map((r) => (
               <button
                 key={r}
                 onClick={() => { setRole(r as any); addToast('info', `রোল পরিবর্তন করে ${r} করা হয়েছে`); }}
-                className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${role === r ? 'bg-[#2563EB] text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${role === r ? 'bg-[#2563EB] text-white' : 'text-slate-400 hover:text-white'}`}
               >
                 {r === 'Owner' ? 'Owner' : r === 'Manager' ? 'Manager' : 'Sales'}
               </button>
@@ -165,25 +169,25 @@ export default function DealerOSDashboard() {
 
           <span className="text-slate-600">|</span>
 
-          {/* Load/Error/Empty State Simulators */}
+          {/* Skeletons/Empty State Simulators */}
           <div className="flex items-center gap-1.5">
             <button 
-              onClick={() => { setLoading(prev => !prev); setApiFailed(false); setIsEmpty(false); }} 
+              onClick={() => { setLoading(prev => !prev); setIsEmptyLeads(false); setIsEmptyVehicles(false); }} 
               className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${loading ? 'bg-amber-600 border-amber-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
             >
-              🔄 Loading
+              🔄 Simulate Loading
             </button>
             <button 
-              onClick={() => { setApiFailed(prev => !prev); setLoading(false); setIsEmpty(false); }} 
-              className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${apiFailed ? 'bg-red-600 border-red-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
+              onClick={() => { setIsEmptyLeads(prev => !prev); setIsEmptyVehicles(false); setLoading(false); }} 
+              className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${isEmptyLeads ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
             >
-              ⚠️ Error
+              Empty Leads
             </button>
             <button 
-              onClick={() => { setIsEmpty(prev => !prev); setLoading(false); setApiFailed(false); }} 
-              className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${isEmpty ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
+              onClick={() => { setIsEmptyVehicles(prev => !prev); setIsEmptyLeads(false); setLoading(false); }} 
+              className={`px-2 py-1 rounded text-[10px] font-bold border transition-all ${isEmptyVehicles ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300'}`}
             >
-              📦 Empty
+              Empty Cars
             </button>
           </div>
         </div>
@@ -191,96 +195,109 @@ export default function DealerOSDashboard() {
 
       <div className="flex-1 flex relative">
         
-        {/* DESKTOP SIDEBAR (width 240px, fixed, white) */}
-        <aside className="w-[240px] bg-white border-r border-[#E5E7EB] shrink-0 hidden md:flex flex-col justify-between p-4 sticky top-0 h-screen">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#2563EB] rounded-xl flex items-center justify-center font-bold text-lg font-outfit text-white shadow-sm">
-                G
+        {/* DESKTOP SIDEBAR */}
+        <aside className="w-[240px] bg-white border-r border-[#E5E7EB] shrink-0 hidden md:flex flex-col justify-between p-4 sticky top-0 h-screen z-40">
+          <div className="space-y-5">
+            {/* Top Brand Info */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#2563EB] rounded-xl flex items-center justify-center font-bold text-lg font-outfit text-white shadow-sm">
+                  G
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-[16px] font-bold font-outfit text-[#111827] leading-tight truncate">GariSale</h2>
+                  <p className="text-[12px] font-sans font-semibold text-[#111827] truncate">ঢাকা অটো হাউস</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h2 className="text-[16px] font-bold font-outfit text-[#111827] truncate">GariSale</h2>
-                <p className="text-[12px] text-[#6B7280] font-sans font-normal truncate">Dhaka Premium Motors</p>
-              </div>
+              <p className="text-[12px] text-[#6B7280] font-sans font-normal pl-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                ধোলাইখাল, ঢাকা
+              </p>
+              <div className="h-px bg-gray-200" />
             </div>
 
+            {/* Sidebar Navigation */}
             <nav className="space-y-1">
               {[
-                { id: 'dashboard', label: '🏠 ড্যাশবোর্ড', path: '/dashboard' },
-                { id: 'inventory', label: '🚗 ইনভেন্টরি', path: '/dashboard/inventory' },
-                { id: 'leads', label: '👥 লিড (CRM)', path: '/dashboard/leads' },
-                { id: 'deals', label: '🤝 ডিল', path: '/dashboard/deals' },
-                { id: 'analytics', label: '📊 Analytics', path: '/dashboard/analytics' },
-                { id: 'automation', label: '🤖 Automation Hub', path: '/dashboard/automation' },
-                { id: 'website', label: '🌐 Website', path: '/dashboard/website' },
-                { id: 'settings', label: '⚙️ Settings', path: '/dashboard/settings' }
+                { id: 'dashboard', label: '🏠 ড্যাশবোর্ড', path: '/dashboard', count: 0, dotColor: '' },
+                { id: 'inventory', label: '🚗 ইনভেন্টরি', path: '/dashboard/inventory', count: 0, dotColor: '' },
+                { id: 'leads', label: '👥 লিড (CRM)', path: '/dashboard/leads', count: 47, dotColor: 'bg-red-500' },
+                { id: 'deals', label: '🤝 ডিল', path: '/dashboard/deals', count: 0, dotColor: '' },
+                { id: 'analytics', label: '📊 Analytics', path: '/dashboard/analytics', count: 0, dotColor: '' },
+                { id: 'automation', label: '🤖 Automation Hub', path: '/dashboard/automation', count: 0, dotColor: '' },
+                { id: 'website', label: '🌐 Website', path: '/dashboard/website', count: 0, dotColor: '' },
+                { id: 'settings', label: '⚙️ Settings', path: '/dashboard/settings', count: 3, dotColor: 'bg-orange-500' }
               ].map((item) => {
                 const isActive = item.id === 'dashboard';
                 return (
                   <Link
                     key={item.id}
                     href={item.path}
-                    className={`w-full flex items-center gap-3 h-11 px-3 rounded-lg text-[12px] font-sans font-semibold transition-all ${
+                    className={`w-full flex items-center justify-between h-11 px-3 rounded-xl text-[12px] font-sans font-semibold transition-all ${
                       isActive 
-                        ? 'bg-[#2563EB] text-white shadow-sm' 
-                        : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] bg-white'
+                        ? 'bg-[#EFF6FF] text-[#2563EB] border-l-3 border-[#2563EB] shadow-sm' 
+                        : 'text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#111827]'
                     }`}
                   >
                     <span>{item.label}</span>
+                    {item.count > 0 && (
+                      <span className={`w-5 h-5 rounded-full ${item.dotColor} text-white text-[9px] font-extrabold flex items-center justify-center shadow-sm`}>
+                        {toBengaliDigits(item.count)}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
             </nav>
           </div>
 
+          {/* Sidebar Bottom components */}
           <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-            <div className="flex items-center justify-between">
-              <span className="border border-[#2563EB] text-[#2563EB] bg-blue-50/50 text-[11px] font-sans font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                Starter Plan
-              </span>
-              <button 
-                onClick={() => addToast('info', 'আপগ্রেড রিকোয়েস্ট পাঠানো হয়েছে')}
-                className="text-[12px] font-sans font-semibold text-[#2563EB] hover:underline"
-              >
-                আপগ্রেড করুন
-              </button>
+            {/* Plan Progress card */}
+            <div className="bg-[#F9FAFB] p-3 rounded-xl border border-gray-150 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="bg-[#2563EB]/10 text-[#2563EB] text-[9px] font-bold px-2 py-0.5 rounded-full border border-blue-150 uppercase tracking-wider">
+                  Starter Plan
+                </span>
+                <Link href="/dashboard/billing" className="text-[11px] font-bold text-[#2563EB] hover:underline">
+                  আপগ্রেড
+                </Link>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-[9px] font-bold text-gray-500">
+                  <span>স্টক লিমিট ব্যবহৃত</span>
+                  <span>{toBengaliDigits(32)}/{toBengaliDigits(50)} গাড়ি</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#2563EB] rounded-full" style={{ width: '64%' }} />
+                </div>
+              </div>
             </div>
-            
-            <div className="flex items-center justify-between text-[12px] font-sans font-semibold text-gray-500 bg-gray-50 p-1.5 rounded-lg border">
+
+            {/* Language Toggle */}
+            <div className="flex items-center justify-between text-[11px] font-sans font-semibold text-gray-500 bg-gray-50 p-1 rounded-lg border">
               <span>ভাষা:</span>
               <div className="flex gap-1.5">
-                <button 
-                  onClick={() => setLang('EN')} 
-                  className={`px-1.5 py-0.5 rounded ${lang === 'EN' ? 'bg-[#2563EB] text-white' : 'hover:bg-gray-200'}`}
-                >
-                  EN
-                </button>
-                <button 
-                  onClick={() => setLang('BN')} 
-                  className={`px-1.5 py-0.5 rounded ${lang === 'BN' ? 'bg-[#2563EB] text-white' : 'hover:bg-gray-200'}`}
-                >
-                  বাংলা
-                </button>
+                <button onClick={() => setLang('EN')} className={`px-1.5 py-0.5 rounded ${lang === 'EN' ? 'bg-[#2563EB] text-white shadow-sm' : 'hover:bg-gray-200'}`}>EN</button>
+                <button onClick={() => setLang('BN')} className={`px-1.5 py-0.5 rounded ${lang === 'BN' ? 'bg-[#2563EB] text-white shadow-sm' : 'hover:bg-gray-200'}`}>বাংলা</button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gray-100 text-[#111827] flex items-center justify-center font-bold text-xs">
-                TR
+            {/* User Account block */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-xs">
+                  TR
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-[#111827] truncate leading-tight">তানভীর রহমান</p>
+                  <span className="text-[10px] text-[#6B7280] font-sans font-normal block leading-none">{role}</span>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold text-[#111827] truncate leading-tight">তানভীর রহমান</p>
-                <span className="text-[12px] font-sans font-normal text-[#6B7280] block">Owner</span>
-              </div>
+              <button onClick={handleSignOut} className="text-gray-400 hover:text-red-600 transition-colors">
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+              </button>
             </div>
-
-            <button 
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 h-11 border border-[#E5E7EB] text-red-600 hover:bg-red-50 rounded-lg text-[12px] font-sans font-semibold transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">logout</span>
-              লগআউট
-            </button>
           </div>
         </aside>
 
@@ -297,34 +314,17 @@ export default function DealerOSDashboard() {
               />
             </div>
             <div className="flex items-center gap-4">
-              <button 
-                onClick={() => addToast('info', 'কোনো নতুন নোটিফিকেশন নেই')}
-                className="relative text-[#6B7280] hover:text-[#111827] p-2"
-              >
+              <button className="relative text-[#6B7280] hover:text-[#111827] p-2">
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
               </button>
               <div className="h-6 w-px bg-gray-200" />
-              <span className="text-[12px] font-sans font-semibold text-[#111827]">Dhaka Premium Motors</span>
+              <span className="text-[12px] font-sans font-semibold text-[#111827]">ঢাকা অটো হাউস</span>
             </div>
           </header>
 
-          <main className="p-4 md:p-5 space-y-6 md:space-y-8 flex-1 bg-[#F9FAFB]">
-            
-            {/* Page Title with fade-in animation */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-1"
-            >
-              <h1 className="text-[24px] font-bold text-[#111827] font-outfit">
-                শুভ সকাল, {user.name}! 👋
-              </h1>
-              <p className="text-[12px] text-[#6B7280] font-sans font-normal">আজ সকাল ১০টা ৩০ মিনিট</p>
-            </motion.div>
+          <main className="p-4 md:p-5 space-y-6 md:space-y-8 flex-1 bg-[#F9FAFB] overflow-y-auto">
 
-            {/* Dynamic Rendering: Loading vs Error vs Empty vs Content */}
             <AnimatePresence mode="wait">
               {loading ? (
                 // SKELETON LOADER
@@ -335,170 +335,293 @@ export default function DealerOSDashboard() {
                   exit={{ opacity: 0 }}
                   className="space-y-6 md:space-y-8"
                 >
-                  <div className="h-24 bg-gray-200 animate-pulse rounded-2xl" />
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                  <div className="h-44 bg-gray-200 animate-pulse rounded-2xl" />
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="h-24 bg-gray-200 animate-pulse rounded-2xl" />
+                      <div key={i} className="h-28 bg-gray-200 animate-pulse rounded-2xl" />
                     ))}
                   </div>
-                  <div className="h-20 bg-gray-200 animate-pulse rounded-2xl" />
-                  <div className="h-48 bg-gray-200 animate-pulse rounded-2xl" />
+                  <div className="h-32 bg-gray-200 animate-pulse rounded-2xl" />
+                  <div className="h-56 bg-gray-200 animate-pulse rounded-2xl" />
                 </motion.div>
-              ) : apiFailed ? (
-                // RED ERROR ALERT
+              ) : isEmptyLeads ? (
+                // EMPTY LEADS STATE
                 <motion.div 
-                  key="error"
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.95, opacity: 0 }}
-                  className="bg-red-50 border border-red-200 p-5 rounded-2xl shadow-sm text-center space-y-4"
-                >
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto text-red-600">
-                    <span className="material-symbols-outlined text-[24px]">error</span>
-                  </div>
-                  <h3 className="text-[16px] font-sans font-semibold text-red-900">ডেটা লোড হয়নি</h3>
-                  <button 
-                    onClick={() => { setLoading(true); setApiFailed(false); setTimeout(() => setLoading(false), 1000); }}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg text-[12px] font-sans font-semibold hover:bg-red-700 active:scale-95 transition-all shadow-sm"
-                  >
-                    আবার চেষ্টা করুন
-                  </button>
-                </motion.div>
-              ) : isEmpty ? (
-                // EMPTY STATE ILLUSTRATION
-                <motion.div 
-                  key="empty"
+                  key="empty-leads"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="bg-white border rounded-2xl p-6 text-center space-y-4 shadow-sm"
+                  className="bg-white border border-[#E5E7EB] rounded-2xl p-8 text-center space-y-4 shadow-sm"
                 >
-                  {/* Automotive illustration SVG */}
-                  <svg className="w-24 h-24 text-gray-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  <svg className="w-20 h-20 text-gray-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m4-3H6" />
                   </svg>
-                  <h3 className="text-[16px] font-sans font-semibold text-gray-900">কোনো তথ্য খুঁজে পাওয়া যায়নি</h3>
+                  <h3 className="text-[16px] font-sans font-semibold text-gray-950">এখনো কোনো লিড নেই</h3>
                   <p className="text-[12px] text-gray-500 font-sans font-normal max-w-sm mx-auto">
-                    আপনার শোরুমের ডাটাবেজে বর্তমানে কোনো অ্যাক্টিভিটি নেই। একটি লিস্টিং তৈরি করুন বা নতুন লিড যোগ করুন।
+                    আপনার গাড়ির লিস্টিং পাবলিক মার্কেটপ্লেসে শেয়ার করুন এবং ক্রেতার লিড সংগ্রহ করুন।
                   </p>
                   <button 
-                    onClick={() => setIsEmpty(false)}
-                    className="bg-[#2563EB] text-white px-4 py-2 rounded-lg text-[12px] font-sans font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://garisale.com/dhaka-auto-house');
+                      addToast('success', 'Marketplace লিংক কপি করা হয়েছে');
+                    }}
+                    className="bg-[#2563EB] text-white px-4 py-2.5 rounded-lg text-[12px] font-sans font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm"
                   >
-                    ডিফল্ট ডেটা ফেরত আনুন
+                    Marketplace লিংক কপি করুন
                   </button>
                 </motion.div>
-              ) : (
-                // NORMAL HIGH FIDELITY DASHBOARD VIEW
+              ) : isEmptyVehicles ? (
+                // EMPTY VEHICLES STATE
                 <motion.div 
-                  key="content"
+                  key="empty-vehicles"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="bg-white border border-[#E5E7EB] rounded-2xl p-8 text-center space-y-4 shadow-sm"
+                >
+                  <svg className="w-20 h-20 text-gray-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-[16px] font-sans font-semibold text-gray-950">আপনার প্রথম গাড়ি যোগ করুন</h3>
+                  <p className="text-[12px] text-gray-500 font-sans font-normal max-w-sm mx-auto">
+                    খুব সহজে ক্যামেরা দিয়ে VIN স্ক্যান করে ১ মিনিটে আপনার ইনভেন্টরিতে গাড়ি যুক্ত করুন।
+                  </p>
+                  <Link 
+                    href="/dashboard/inventory/add"
+                    className="bg-[#2563EB] text-white px-4 py-2.5 rounded-lg text-[12px] font-sans font-semibold hover:brightness-110 active:scale-95 transition-all shadow-sm inline-block"
+                  >
+                    VIN স্ক্যান করে ১ মিনিটে যোগ করুন
+                  </Link>
+                </motion.div>
+              ) : (
+                // NORMAL PORTFOLIO
+                <motion.div 
+                  key="normal-content"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                   className="space-y-6 md:space-y-8"
                 >
                   
-                  {/* Morning Briefing card */}
-                  <div className="bg-[#EFF6FF] border-l-4 border-[#2563EB] p-4 md:p-5 rounded-r-2xl shadow-sm space-y-3">
-                    <div className="flex items-center gap-2 text-[#2563EB]">
-                      <span className="material-symbols-outlined text-[20px]">wb_sunny</span>
-                      <h3 className="text-[16px] font-sans font-semibold uppercase tracking-wider">আজকের মর্নিং ব্রিফিং</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[14px] font-sans font-normal text-[#374151]">
-                      <div>
-                        <span className="text-[#6B7280] block text-[12px] font-sans font-normal uppercase">গতকালকের অর্জন</span>
-                        <p className="mt-1 font-semibold text-[#111827]">
-                          {toBengaliDigits(2)} টি বিক্রি · {role === 'Salesperson' ? (
-                            <span className="text-gray-400 underline cursor-help" title="Owner শুধু দেখতে পারবেন">—</span>
-                          ) : (
-                            formatBDT(2850000)
-                          )} রাজস্ব · {toBengaliDigits(7)} নতুন লিড
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-[#6B7280] block text-[12px] font-sans font-normal uppercase">আজকের জরুরি অ্যাকশন</span>
-                        <p className="mt-1 font-semibold text-[#111827]">
-                          {toBengaliDigits(3)} টি follow-up · {toBengaliDigits(1)} টি পুরানো গাড়ি
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats Grid with stagger fade-in */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-                    {[
-                      { label: 'Available Cars', value: `${toBengaliDigits(countVal)} টি`, icon: 'directions_car', color: 'text-blue-600', hide: false },
-                      { label: 'Active Leads', value: `${toBengaliDigits(15)} টি`, icon: 'groups', color: 'text-indigo-600', hide: false },
-                      { label: 'Follow-ups Today', value: `${toBengaliDigits(3)} টি`, icon: 'calendar_today', color: 'text-emerald-600', hide: false },
-                      { label: 'Pending Deals', value: `${toBengaliDigits(2)} টি`, icon: 'handshake', color: 'text-amber-600', hide: false }
-                    ].map((stat, idx) => (
-                      <div key={idx} className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex items-center justify-between hover:shadow-md transition-all duration-150">
-                        <div className="space-y-1">
-                          <span className="block text-[12px] font-sans font-normal text-[#6B7280] uppercase tracking-wider">{stat.label}</span>
-                          <span className="block text-[28px] md:text-[32px] font-bold font-outfit text-[#111827] leading-none">{stat.value}</span>
+                  {/* AGING WATCHLIST BANNER (shows if any vehicle 45+ days) */}
+                  {showAgingAlert && (
+                    <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white p-4.5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 border border-red-500">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-white text-[28px]">warning</span>
+                        <div className="space-y-0.5">
+                          <h4 className="text-[14px] font-bold font-sans">SK-202501-0023 • Toyota Axio • ৬৭ দিন লটে আছে</h4>
+                          <p className="text-[12px] text-orange-100 font-sans font-semibold">প্রতিদিন BDT ১,২০০ ক্ষতি হচ্ছে (holding cost)</p>
                         </div>
-                        <span className={`material-symbols-outlined text-2xl ${stat.color}`}>{stat.icon}</span>
                       </div>
-                    ))}
-                  </div>
+                      <Link 
+                        href="/dashboard/maestro"
+                        className="bg-white text-orange-700 px-4 py-2 rounded-lg text-[12px] font-sans font-bold hover:bg-orange-50 active:scale-95 transition-all shadow-sm shrink-0"
+                      >
+                        দাম কমান →
+                      </Link>
+                    </div>
+                  )}
 
-                  {/* Maestro AI Advice */}
-                  <div className="bg-white border border-[#2563EB] p-4 md:p-5 rounded-2xl shadow-sm space-y-3 hover:shadow-md transition-all duration-150 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[#2563EB]">
-                        <span className="material-symbols-outlined text-[20px]">psychology</span>
-                        <h4 className="text-[16px] font-sans font-semibold uppercase tracking-wider">💡 Maestro-র পরামর্শ</h4>
+                  {/* MORNING BRIEFING CARD */}
+                  <div className="bg-gradient-to-r from-[#EFF6FF] to-[#DBEAFE] border-l-4 border-[#2563EB] p-6 rounded-2xl shadow-sm space-y-4">
+                    {/* Row 1 */}
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-0.5">
+                        <h2 className="text-[20px] font-bold font-outfit text-[#111827]">🌅 শুভ সকাল, {user.name}!</h2>
+                        <p className="text-[14px] text-[#6B7280] font-sans font-semibold">শুক্রবার, ১৭ই জুলাই ২০২৬</p>
                       </div>
-                      <span className="bg-blue-50 text-[#2563EB] border border-blue-100 text-[12px] font-sans font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        DEMAND
+                      <span className="bg-[#F0FDF4] text-[#16A34A] border border-[#16A34A] text-[11px] font-sans font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Starter Plan ✦
                       </span>
                     </div>
-                    <p className="text-[14px] font-sans font-normal text-[#374151] leading-relaxed max-w-2xl">
-                      "Toyota Axio-র বাজারমূল্য চলতি মাসে ঢাকায় ৮% বৃদ্ধি পেয়েছে। আপনার স্টকে ৩টি Toyota Axio রয়েছে। ডিল ক্লিয়ার করার জন্য এখনই বিজ্ঞাপন আপডেট করুন।"
-                    </p>
-                    <button 
-                      onClick={() => addToast('info', 'Maestro এনালাইটিক্স লোড করা হচ্ছে')}
-                      className="text-[12px] font-sans font-semibold text-[#2563EB] hover:underline flex items-center gap-1"
-                    >
-                      এখনই দেখুন →
-                    </button>
-                  </div>
 
-                  {/* Urgent Aging Stock Warning Card */}
-                  <div className="bg-red-50 border border-red-200 p-4 md:p-5 rounded-2xl shadow-sm flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2 text-red-700">
-                      <span className="material-symbols-outlined text-red-600 text-[20px]">warning</span>
-                      <span className="text-[14px] font-sans font-normal">🚨 জরুরি: SK-202501-0012 লটে ৯২ দিন ধরে আছে</span>
+                    {/* Divider */}
+                    <div className="h-px bg-[#BFDBFE]" />
+
+                    {/* Row 2: Yesterday's Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <span className="text-[12px] text-[#6B7280] font-bold uppercase tracking-wider block">গতকালের বিক্রি</span>
+                        <span className="text-xl font-bold text-[#111827] block font-outfit">{toBengaliDigits(3)}টি গাড়ি</span>
+                        {role === 'Salesperson' ? (
+                          <span className="text-[14px] text-gray-400 underline cursor-help block font-sans" title="Owner শুধু দেখতে পারবেন">—</span>
+                        ) : (
+                          <span className="text-[14px] text-green-600 font-bold block">▲ BDT ৪৫L</span>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <span className="text-[12px] text-[#6B7280] font-bold uppercase tracking-wider block">নতুন লিড</span>
+                        <span className="text-xl font-bold text-[#111827] block font-outfit">{toBengaliDigits(12)}টি</span>
+                        <span className="text-[13px] text-green-600 font-bold block">৮টি যোগাযোগ করা হয়েছে</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[12px] text-[#6B7280] font-bold uppercase tracking-wider block">জরুরি কাজ</span>
+                        <span className="text-xl font-bold text-[#DC2626] block font-outfit">{toBengaliDigits(3)}টি</span>
+                        <Link href="/dashboard/aging" className="text-[13px] text-[#DC2626] font-bold hover:underline block">
+                          এখনই দেখুন →
+                        </Link>
+                      </div>
                     </div>
-                    <Link 
-                      href="/dashboard/inventory" 
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-[12px] font-sans font-semibold hover:bg-red-700 active:scale-95 transition-all shadow-sm"
-                    >
-                      ব্যবস্থা নিন
-                    </Link>
                   </div>
 
-                  {/* Recent Activity Feed */}
-                  <section className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-4 md:p-5 space-y-4">
+                  {/* QUICK STATS ROW (4 cards) */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    
+                    {/* Card 1: Available Cars */}
+                    <Link 
+                      href="/dashboard/inventory?status=available"
+                      className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex flex-col justify-between gap-3 hover:shadow-md transition-all duration-150 text-left"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-[13px] text-[#6B7280] font-bold font-sans">Available Cars</span>
+                        <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center text-blue-600 text-lg">
+                          🚗
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[28px] md:text-[32px] font-bold font-outfit text-[#111827] leading-none">
+                          {toBengaliDigits(countAvailable)}
+                        </span>
+                        <span className="text-[12px] text-gray-500 block font-semibold">বিক্রির জন্য প্রস্তুত গাড়ি</span>
+                        <span className="text-[12px] text-green-600 font-bold block">▲ ৩টি এই সপ্তাহে যোগ হয়েছে</span>
+                      </div>
+                    </Link>
+
+                    {/* Card 2: Active Leads */}
+                    <Link 
+                      href="/dashboard/leads"
+                      className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex flex-col justify-between gap-3 hover:shadow-md transition-all duration-150 text-left"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-[13px] text-[#6B7280] font-bold font-sans">Active Leads</span>
+                        <div className="w-10 h-10 rounded-full bg-[#F5F3FF] flex items-center justify-center text-purple-600 text-lg">
+                          👥
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[28px] md:text-[32px] font-bold font-outfit text-[#111827] leading-none">
+                          {toBengaliDigits(countLeads)}
+                        </span>
+                        <span className="text-[12px] text-gray-500 block font-semibold">সক্রিয় লিড</span>
+                        <span className="text-[12px] text-red-600 font-bold block">🔥 ৫টি Hot Lead</span>
+                      </div>
+                    </Link>
+
+                    {/* Card 3: Follow-ups Today */}
+                    <Link 
+                      href="/dashboard/leads?filter=followup_due"
+                      className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex flex-col justify-between gap-3 hover:shadow-md transition-all duration-150 text-left"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="text-[13px] text-[#6B7280] font-bold font-sans">Follow-ups Today</span>
+                        <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center text-orange-600 text-lg">
+                          📅
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[28px] md:text-[32px] font-bold font-outfit text-[#111827] leading-none">
+                          {toBengaliDigits(countFollowups)}
+                        </span>
+                        <span className="text-[12px] text-gray-500 block font-semibold">আজকের ফলো-আপ</span>
+                        <span className="text-[12px] text-orange-600 font-bold block">৩টি অতিমাত্রায় বিলম্বিত</span>
+                      </div>
+                    </Link>
+
+                    {/* Card 4: Pending Approvals */}
+                    <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex flex-col justify-between gap-3 hover:shadow-md transition-all duration-150">
+                      <div className="flex justify-between items-start">
+                        <span className="text-[13px] text-[#6B7280] font-bold font-sans">Pending Approvals</span>
+                        <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center text-red-600 text-lg">
+                          ⏳
+                        </div>
+                      </div>
+                      <div className="space-y-0.5">
+                        {role === 'Salesperson' ? (
+                          <div className="space-y-1">
+                            <span className="text-red-500 font-bold block text-xs">Access Restricted</span>
+                            <span className="text-[10px] text-gray-400 block font-bold leading-normal">Owner শুধু দেখতে পারবেন</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Link href="/dashboard/deals?status=pending_approval" className="block">
+                              <span className="text-[28px] md:text-[32px] font-bold font-outfit text-[#111827] leading-none hover:text-[#2563EB]">
+                                {toBengaliDigits(2)}
+                              </span>
+                            </Link>
+                            <span className="text-[12px] text-gray-500 block font-semibold">অনুমোদন বাকি ডিল</span>
+                            <span className="text-[12px] text-red-600 font-bold block">Manager approval required</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* MAESTRO AI INSIGHT CARD */}
+                  <div className="bg-white border border-[#E5E7EB] p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-150 space-y-4 text-left">
+                    <div className="flex justify-between items-center border-b pb-2">
+                      <h4 className="text-[15px] font-bold text-[#111827] font-sans flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[#2563EB] text-[20px]">psychology</span>
+                        💡 Maestro-র আজকের পরামর্শ
+                      </h4>
+                      <span className="bg-[#DBEAFE] text-[#1D4ED8] rounded-full px-3 py-1 text-[11px] font-sans font-semibold">
+                        PRICING
+                      </span>
+                    </div>
+
+                    <p className="text-[16px] text-[#374151] leading-relaxed font-sans font-medium">
+                      আপনার Toyota Axio 2019 গাড়িটি ৪৫ দিন ধরে বিক্রি হয়নি। একই গাড়ি ঢাকায় BDT ১৩,৫০,০০০-এ বিক্রি হচ্ছে। BDT ৫০,০০০ কমালে এই সপ্তাহেই বিক্রির সম্ভাবনা আছে।
+                    </p>
+
+                    <button 
+                      onClick={() => addToast('info', 'প্রাইস অপ্টিমাইজেশান লোড করা হচ্ছে...')}
+                      className="w-full h-11 bg-[#2563EB] text-white rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-xs shadow-sm flex items-center justify-center gap-1.5"
+                    >
+                      SK-202501-0023 দেখুন ও দাম পরিবর্তন করুন →
+                    </button>
+
+                    <div className="flex justify-between text-[12px] font-sans font-semibold text-[#6B7280] pt-2">
+                      <span>আইএমভি এনালাইটিক্স</span>
+                      <Link href="/dashboard/analytics" className="text-[#2563EB] hover:underline">
+                        আরো ৪টি পরামর্শ আছে →
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* RECENT ACTIVITY TIMELINE */}
+                  <section className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-5 space-y-5 text-left">
                     <h3 className="text-[16px] font-sans font-semibold text-[#111827] uppercase tracking-wider border-b pb-3">সাম্প্রতিক অ্যাক্টিভিটি</h3>
-                    <div className="relative border-l border-gray-100 ml-3 space-y-5 py-2">
+                    
+                    <div className="relative border-l border-gray-100 ml-4 space-y-6 py-2">
                       {[
-                        { time: '১০ মিনিট আগে', desc: 'New lead: Rafiq Hasan → Toyota Axio (Marketplace)', icon: 'groups', color: 'bg-blue-500' },
-                        { time: '২৫ মিনিট আগে', desc: 'Deal SK-0022 approved by Manager', icon: 'handshake', color: 'bg-emerald-500' },
-                        { time: '৪৫ মিনিট আগে', desc: '2019 Honda Fit price updated', icon: 'sell', color: 'bg-indigo-500' },
-                        { time: '২ ঘণ্টা আগে', desc: 'Daily summary report delivered to owner', icon: 'analytics', color: 'bg-purple-500' },
-                        { time: '৩ ঘণ্টা আগে', desc: 'New lead: Karim Ullah → Honda Grace', icon: 'groups', color: 'bg-blue-500' }
+                        { time: '৫ মিনিট আগে', desc: 'নতুন লিড: রফিক হোসেন → Toyota Axio', icon: 'groups', color: 'bg-emerald-500 text-white' },
+                        { time: '২২ মিনিট আগে', desc: 'Salman WhatsApp করেছেন Lead #1234-কে', icon: 'chat', color: 'bg-blue-500 text-white' },
+                        { time: '১ ঘণ্টা আগে', desc: 'ডিল #D-089 অনুমোদিত হয়েছে', icon: 'handshake', color: 'bg-emerald-500 text-white' },
+                        { time: '২ ঘণ্টা আগে', desc: 'Honda Fit sync হয়েছে marketplace-এ', icon: 'sync', color: 'bg-indigo-500 text-white' },
+                        { time: '৩ ঘণ্টা আগে', desc: 'SK-202501-0056 sync error — retry করুন', icon: 'sync_problem', color: 'bg-red-500 text-white' }
                       ].map((act, idx) => (
                         <div key={idx} className="relative pl-8">
-                          <div className="absolute left-0 top-1 -ml-3 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[#6B7280] shadow-sm border border-gray-200 z-10">
-                            <span className="material-symbols-outlined text-[12px]">{act.icon}</span>
+                          {/* Timeline dot icon */}
+                          <div className={`absolute left-0 top-0.5 -ml-[16px] w-8 h-8 rounded-full flex items-center justify-center text-[14px] shadow-sm border border-white z-10 ${act.color}`}>
+                            <span className="material-symbols-outlined text-[14px]">{act.icon}</span>
                           </div>
                           <div className="space-y-0.5">
                             <p className="text-[14px] font-sans font-normal text-[#374151]">{act.desc}</p>
-                            <span className="text-[12px] font-sans font-normal text-[#6B7280] block">{act.time}</span>
+                            <span className="text-[12px] font-sans font-normal text-[#6B7280] block">{toBengaliDigits(act.time)}</span>
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="pt-2 border-t text-center">
+                      <button 
+                        onClick={() => addToast('info', 'সম্পূর্ণ অ্যাক্টিভিটি লগ লোড করা হচ্ছে')}
+                        className="text-[12px] font-sans font-semibold text-[#2563EB] hover:underline"
+                      >
+                        সব Activity দেখুন →
+                      </button>
                     </div>
                   </section>
 
@@ -510,8 +633,8 @@ export default function DealerOSDashboard() {
         </div>
       </div>
 
-      {/* MOBILE BOTTOM TAB NAVIGATION (fixed, white, shadow-top, z-50) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E5E7EB] flex items-center justify-around z-50 px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+      {/* MOBILE BOTTOM TAB BAR */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E5E7EB] flex items-center justify-around z-45 px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         {[
           { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
           { id: 'inventory', label: 'Inventory', icon: 'directions_car', path: '/dashboard/inventory' },
@@ -535,7 +658,7 @@ export default function DealerOSDashboard() {
         })}
       </div>
 
-      {/* TOAST SYSTEM */}
+      {/* TOAST ALERTS */}
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 space-y-2 w-80">
         <AnimatePresence>
           {toasts.map(t => (
